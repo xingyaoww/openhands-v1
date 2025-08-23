@@ -1,0 +1,7 @@
+[project]
+name = "openhands"
+version = "1.0.0"
+description = "OpenHands: Code Less, Make More"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
