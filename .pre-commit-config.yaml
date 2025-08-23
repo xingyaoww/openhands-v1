@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: uv-format
+        name: Format with uv format
+        entry: uv
+        args: [format]
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+      - id: uv-check
+        name: Lint with ruff
+        entry: uv
+        args: [run, ruff, check, --fix]
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true

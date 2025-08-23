@@ -9,3 +9,9 @@ dependencies = [
     "litellm>=1.75.9",
     "pydantic>=2.11.7",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.12.10",
+]
