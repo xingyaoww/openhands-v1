@@ -3,5 +3,9 @@ name = "openhands"
 version = "1.0.0"
 description = "OpenHands: Code Less, Make More"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.11.3",
+    "litellm>=1.75.9",
+    "pydantic>=2.11.7",
+]
