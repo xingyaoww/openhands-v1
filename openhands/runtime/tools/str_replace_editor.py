@@ -786,8 +786,12 @@ def _make_api_tool_result(tool_result: ToolResult) -> str:
     return tool_result.output
 
 
-def _execute_str_replace_editor(action: StrReplaceEditorAction) -> dict:
+def _execute_str_replace_editor(action) -> dict:
     """Execute the string replace editor tool."""
+
+    # Handle both dict and StrReplaceEditorAction inputs
+    if isinstance(action, dict):
+        action = StrReplaceEditorAction(**action)
 
     # Create OHEditor instance with workspace root if path is absolute
     path_obj = Path(action.path)
