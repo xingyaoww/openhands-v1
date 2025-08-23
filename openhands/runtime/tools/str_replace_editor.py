@@ -6,33 +6,43 @@ from pathlib import Path
 from typing import Literal
 
 from openhands_aci.editor import OHEditor, ToolError, ToolResult
+from pydantic import BaseModel, Field
 
-from ..schema import ActionBase, ObservationBase
 from ..tool import Tool
 
 
-class StrReplaceEditorAction(ActionBase):
-    """Action schema for the string replace editor tool."""
+class StrReplaceEditorAction(BaseModel):
+    """Schema for string replace editor operations."""
 
-    command: Literal["view", "create", "str_replace", "insert", "undo_edit"]
-    path: str
-    file_text: str | None = None
-    old_str: str | None = None
-    new_str: str | None = None
-    insert_line: int | None = None
-    view_range: list[int] | None = None
-    security_risk: Literal["LOW", "MEDIUM", "HIGH"]
-
-
-class StrReplaceEditorObservation(ObservationBase):
-    """Observation schema for the string replace editor tool."""
-
-    output: str
-    error: str | None = None
-    path: str | None = None
-    prev_exist: bool | None = None
-    old_content: str | None = None
-    new_content: str | None = None
+    command: Literal["view", "create", "str_replace", "insert", "undo_edit"] = Field(
+        description="The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`."
+    )
+    path: str = Field(
+        description="Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`."
+    )
+    security_risk: Literal["LOW", "MEDIUM", "HIGH"] = Field(
+        description="The LLM's assessment of the safety risk of this action."
+    )
+    file_text: str | None = Field(
+        default=None,
+        description="Required parameter of `create` command, with the content of the file to be created.",
+    )
+    old_str: str | None = Field(
+        default=None,
+        description="Required parameter of `str_replace` command containing the string in `path` to replace.",
+    )
+    new_str: str | None = Field(
+        default=None,
+        description="Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert.",
+    )
+    insert_line: int | None = Field(
+        default=None,
+        description="Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`.",
+    )
+    view_range: list[int] | None = Field(
+        default=None,
+        description="Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.",
+    )
 
 
 def _make_api_tool_result(tool_result: ToolResult) -> str:
@@ -44,9 +54,7 @@ def _make_api_tool_result(tool_result: ToolResult) -> str:
     return tool_result.output
 
 
-def _execute_str_replace_editor(
-    action: StrReplaceEditorAction,
-) -> StrReplaceEditorObservation:
+def _execute_str_replace_editor(action: StrReplaceEditorAction) -> dict:
     """Execute the string replace editor tool."""
 
     # Create OHEditor instance with workspace root if path is absolute
@@ -98,67 +106,8 @@ def _execute_str_replace_editor(
         + f"\n</oh_aci_output_{marker_id}>"
     )
 
-    # Create observation with the formatted output
-    observation_data = {
-        "output": final_output,
-        "error": result.error,
-    }
+    return {"output": final_output}
 
-    # Add additional fields if available
-    if hasattr(result, "path") and result.path:
-        observation_data["path"] = result.path
-    if hasattr(result, "prev_exist"):
-        observation_data["prev_exist"] = result.prev_exist
-    if hasattr(result, "old_content") and result.old_content:
-        observation_data["old_content"] = result.old_content
-    if hasattr(result, "new_content") and result.new_content:
-        observation_data["new_content"] = result.new_content
-
-    return StrReplaceEditorObservation(**observation_data)
-
-
-# Tool schema based on the OpenHands str_replace_editor.py
-STR_REPLACE_EDITOR_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "command": {
-            "description": "The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.",
-            "enum": ["view", "create", "str_replace", "insert", "undo_edit"],
-            "type": "string",
-        },
-        "path": {
-            "description": "Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`.",
-            "type": "string",
-        },
-        "file_text": {
-            "description": "Required parameter of `create` command, with the content of the file to be created.",
-            "type": "string",
-        },
-        "old_str": {
-            "description": "Required parameter of `str_replace` command containing the string in `path` to replace.",
-            "type": "string",
-        },
-        "new_str": {
-            "description": "Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert.",
-            "type": "string",
-        },
-        "insert_line": {
-            "description": "Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`.",
-            "type": "integer",
-        },
-        "view_range": {
-            "description": "Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.",
-            "items": {"type": "integer"},
-            "type": "array",
-        },
-        "security_risk": {
-            "type": "string",
-            "description": "The LLM's assessment of the safety risk of this action. See the SECURITY_RISK_ASSESSMENT section in the system prompt for risk level definitions.",
-            "enum": ["LOW", "MEDIUM", "HIGH"],
-        },
-    },
-    "required": ["command", "path", "security_risk"],
-}
 
 # Tool description based on the OpenHands str_replace_editor.py
 STR_REPLACE_EDITOR_DESCRIPTION = """Custom editing tool for viewing, creating and editing files in plain-text format
@@ -200,7 +149,6 @@ def create_str_replace_editor_tool() -> Tool:
     return Tool(
         name="str_replace_editor",
         description=STR_REPLACE_EDITOR_DESCRIPTION,
-        input_schema=STR_REPLACE_EDITOR_SCHEMA,
-        output_schema=StrReplaceEditorObservation,
+        input_schema=StrReplaceEditorAction.model_json_schema(),
         execute_fn=_execute_str_replace_editor,
     )
