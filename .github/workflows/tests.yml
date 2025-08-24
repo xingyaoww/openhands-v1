@@ -6,7 +6,7 @@ on:
     branches: ["**"]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -63,3 +63,58 @@ jobs:
             coverage.xml
             code-coverage-results.md
           if-no-files-found: ignore
+      - name: Parse coverage percent
+        if: always()
+        id: parsecov
+        run: |
+          python - << 'PY'
+          import xml.etree.ElementTree as ET
+          import math
+          p = 'coverage.xml'
+          try:
+              root = ET.parse(p).getroot()
+              lr = root.attrib.get('line-rate')
+              pct = int(round(float(lr) * 100)) if lr is not None else 0
+          except Exception:
+              pct = 0
+          print(f"coverage_percent={pct}")
+          with open("coverage_percent.txt", "w") as f:
+              f.write(str(pct))
+          PY
+
+      - name: Determine badge color
+        if: always()
+        id: color
+        run: |
+          PCT=$(cat coverage_percent.txt || echo 0)
+          if [ "$PCT" -ge 90 ]; then COLOR=brightgreen; 
+          elif [ "$PCT" -ge 75 ]; then COLOR=green; 
+          elif [ "$PCT" -ge 60 ]; then COLOR=yellowgreen; 
+          elif [ "$PCT" -ge 50 ]; then COLOR=yellow; 
+          else COLOR=red; fi
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "pct=$PCT" >> $GITHUB_OUTPUT
+
+      - name: Generate coverage badge
+        if: always()
+        uses: emibcn/badge-action@v2.0.2
+        with:
+          label: coverage
+          status: "${{ steps.color.outputs.pct }}%"
+          color: "${{ steps.color.outputs.color }}"
+          path: badges/coverage.svg
+
+      - name: Upload badge artifact (PRs)
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: badges/coverage.svg
+
+      - name: Commit coverage badge (push builds)
+        if: ${{ always() && github.event_name == 'push' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "badges/coverage.svg"
+          message: "docs: update coverage badge [skip ci]"
+          default_author: github_actions
