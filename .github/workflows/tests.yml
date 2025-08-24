@@ -93,9 +93,9 @@ jobs:
           echo "color=$COLOR" >> $GITHUB_OUTPUT
           echo "pct=$PCT" >> $GITHUB_OUTPUT
 
-      - name: Ensure badges directory
+      - name: Ensure docs/assets directory
         if: always()
-        run: mkdir -p badges
+        run: mkdir -p docs/assets
 
       - name: Generate coverage badge
         if: always()
@@ -104,19 +104,19 @@ jobs:
           label: coverage
           status: "${{ steps.color.outputs.pct }}%"
           color: "${{ steps.color.outputs.color }}"
-          path: badges/coverage.svg
+          path: docs/assets/coverage.svg
 
       - name: Upload badge artifact (PRs)
         if: ${{ always() && github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-badge
-          path: badges/coverage.svg
+          path: docs/assets/coverage.svg
 
       - name: Commit coverage badge (push builds)
         if: ${{ always() && github.event_name == 'push' }}
         uses: EndBug/add-and-commit@v9
         with:
-          add: "badges/coverage.svg"
+          add: "docs/assets/coverage.svg"
           message: "docs: update coverage badge [skip ci]"
           default_author: github_actions
