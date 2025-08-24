@@ -4,7 +4,6 @@ name: Pre-commit checks
 on:
   push:
     branches: ["**"]   # all branches
-  pull_request:
 
 jobs:
   pre-commit:

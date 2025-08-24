@@ -3,7 +3,6 @@ name: Run tests
 on:
   push:
     branches: ["**"]   # all branches
-  pull_request:
 
 jobs:
   tests:
