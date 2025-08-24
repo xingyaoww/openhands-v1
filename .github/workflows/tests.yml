@@ -25,4 +25,4 @@ jobs:
         run: uv pip install -e .
 
       - name: Run pytest
-        run: uv run pytest -v --cov=openhands --cov-report=xml
+        run: uv run pytest -v tests/
