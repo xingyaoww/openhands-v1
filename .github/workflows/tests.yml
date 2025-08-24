@@ -1,13 +1,11 @@
 name: Run tests
-
 on:
   push:
-    branches: ["**"]   # all branches
+    branches: ["**"]
 
 jobs:
   tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,13 +13,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"   # or match your project version
+          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --frozen --group dev
+
+      - name: Install project (editable)
+        run: uv pip install -e .
 
       - name: Run pytest
-        run: uv run pytest -v
+        run: uv run pytest -v tests/
