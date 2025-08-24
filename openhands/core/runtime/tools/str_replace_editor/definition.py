@@ -62,6 +62,10 @@ class StrReplaceEditorObservation(ObservationBase):
     )
     error: str | None = Field(default=None, description="Error message if any.")
 
+    @property
+    def agent_observation(self) -> str:
+        return self.output
+
 
 Command = Literal[
     "view",

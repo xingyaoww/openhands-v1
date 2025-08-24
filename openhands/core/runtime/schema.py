@@ -132,3 +132,8 @@ class ObservationBase(Schema):
     """Base schema for output observation."""
 
     model_config = ConfigDict(extra="allow")
+
+    @property
+    def agent_observation(self) -> str:
+        """Get the observation string to show to the agent."""
+        raise NotImplementedError("Subclasses must implement agent_observation")
