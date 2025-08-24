@@ -1,6 +1,15 @@
-from typing import Any, Callable
+import re
+from typing import Any, Callable, TypeVar, Generic
 from pydantic import BaseModel, Field
 from .schema import ActionBase, ObservationBase, Schema
+
+ActionT = TypeVar("ActionT", bound=ActionBase)
+ObservationT = TypeVar("ObservationT", bound=ObservationBase)
+
+
+def to_camel_case(s: str) -> str:
+    parts = re.split(r"[_\-\s]+", s)
+    return "".join(word.capitalize() for word in parts if word)
 
 
 class ToolAnnotations(BaseModel):
@@ -30,7 +39,7 @@ class ToolAnnotations(BaseModel):
     )
 
 
-class Tool:
+class Tool(Generic[ActionT, ObservationT]):
     """Tool that wraps an executor function with input/output validation and schema.
 
     - Normalize input/output schemas (class or dict) into both model+schema.
@@ -48,7 +57,7 @@ class Tool:
         description: str | None = None,
         annotations: ToolAnnotations | None = None,
         _meta: dict[str, Any] | None = None,
-        execute_fn: Callable[[ActionBase], ObservationBase] | None = None,
+        execute_fn: Callable[[ActionT], ObservationT] | None = None,
     ):
         self.name = name
         self.description = description
@@ -71,7 +80,7 @@ class Tool:
         elif isinstance(input_schema, dict):
             self.input_schema = input_schema
             self.action_type = ActionBase.from_mcp_schema(
-                f"{self.name}Action", input_schema
+                f"{to_camel_case(self.name)}Action", input_schema
             )
         else:
             raise TypeError(
@@ -93,14 +102,18 @@ class Tool:
         elif isinstance(output_schema, dict):
             self.output_schema = output_schema
             self.observation_type = ObservationBase.from_mcp_schema(
-                f"{self.name}Observation", output_schema
+                f"{to_camel_case(self.name)}Observation", output_schema
             )
         else:
             raise TypeError(
                 "output_schema must be ObservationBase subclass, dict, or None"
             )
 
-    def call(self, action: ActionBase) -> ObservationBase:
+    def call(self, action: ActionT) -> ObservationBase:
+        """Validate input, execute, and coerce output.
+
+        We always return some ObservationBase subclass, but not always the generic ObservationT.
+        """
         if self.execute_fn is None:
             raise NotImplementedError(f"Tool '{self.name}' has no executor")
 

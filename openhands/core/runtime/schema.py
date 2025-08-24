@@ -24,6 +24,65 @@ def py_type(spec: dict[str, Any]) -> Any:
     return Any
 
 
+def _process_schema_node(node, defs):
+    """Recursively process a schema node to simplify and resolve $ref.
+
+    https://www.reddit.com/r/mcp/comments/1kjo9gt/toolinputschema_conversion_from_pydanticmodel/
+    https://gist.github.com/leandromoreira/3de4819e4e4df9422d87f1d3e7465c16
+    """
+    # Handle $ref references
+    if "$ref" in node:
+        ref_path = node["$ref"]
+        if ref_path.startswith("#/$defs/"):
+            ref_name = ref_path.split("/")[-1]
+            if ref_name in defs:
+                # Process the referenced definition
+                return _process_schema_node(defs[ref_name], defs)
+
+    # Start with a new schema object
+    result = {}
+
+    # Copy the basic properties
+    if "type" in node:
+        result["type"] = node["type"]
+
+    # Handle anyOf (often used for optional fields with None)
+    if "anyOf" in node:
+        non_null_types = [t for t in node["anyOf"] if t.get("type") != "null"]
+        if non_null_types:
+            # Process the first non-null type
+            processed = _process_schema_node(non_null_types[0], defs)
+            result.update(processed)
+
+    # Handle description
+    if "description" in node:
+        result["description"] = node["description"]
+
+    # Handle object properties recursively
+    if node.get("type") == "object" and "properties" in node:
+        result["type"] = "object"
+        result["properties"] = {}
+
+        # Process each property
+        for prop_name, prop_schema in node["properties"].items():
+            result["properties"][prop_name] = _process_schema_node(prop_schema, defs)
+
+        # Add required fields if present
+        if "required" in node:
+            result["required"] = node["required"]
+
+    # Handle arrays
+    if node.get("type") == "array" and "items" in node:
+        result["type"] = "array"
+        result["items"] = _process_schema_node(node["items"], defs)
+
+    # Handle enum
+    if "enum" in node:
+        result["enum"] = node["enum"]
+
+    return result
+
+
 class Schema(BaseModel):
     """Base schema for input action / output observation."""
 
@@ -32,13 +91,9 @@ class Schema(BaseModel):
     @classmethod
     def to_mcp_schema(cls) -> dict[str, Any]:
         """Convert to JSON schema format compatible with MCP."""
-        js = cls.model_json_schema()
-        req = [n for n, f in cls.model_fields.items() if f.is_required()]
-        return {
-            "type": "object",
-            "properties": js.get("properties", {}) or {},
-            "required": req or [],
-        }
+        full_schema = cls.model_json_schema()
+        # This will get rid of all "anyOf" in the schema, so it is fully compatible with MCP tool schema
+        return _process_schema_node(full_schema, full_schema.get("$defs", {}))
 
     @classmethod
     def from_mcp_schema(
