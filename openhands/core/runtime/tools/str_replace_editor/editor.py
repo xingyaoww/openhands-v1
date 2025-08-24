@@ -110,13 +110,13 @@ class FileEditor:
                     new_str,
                     "No replacement was performed. `new_str` and `old_str` must be different.",
                 )
-            return self.str_replace(_path, old_str, new_str, enable_linting)
+            return self.str_replace(_path, old_str, new_str)
         elif command == "insert":
             if insert_line is None:
                 raise EditorToolParameterMissingError(command, "insert_line")
             if new_str is None:
                 raise EditorToolParameterMissingError(command, "new_str")
-            return self.insert(_path, insert_line, new_str, enable_linting)
+            return self.insert(_path, insert_line, new_str)
         elif command == "undo_edit":
             return self.undo_edit(_path)
 
@@ -374,7 +374,6 @@ class FileEditor:
         path: Path,
         insert_line: int,
         new_str: str,
-        enable_linting: bool,
         encoding: str = "utf-8",
     ) -> StrReplaceEditorObservation:
         """
