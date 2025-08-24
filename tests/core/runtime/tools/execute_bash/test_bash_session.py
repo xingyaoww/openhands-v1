@@ -8,7 +8,7 @@ from openhands.core.runtime.tools.execute_bash.bash_session import (
     BashSession,
 )
 from openhands.core.runtime.tools.execute_bash.definition import ExecuteBashAction
-from tests.core.runtime.tools.execute_bash.conftest import get_no_change_timeout_suffix
+from .conftest import get_no_change_timeout_suffix
 
 logger = get_logger(__name__)
 
