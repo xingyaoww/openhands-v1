@@ -1,7 +1,8 @@
 """Tests for basic file editor operations."""
 
 from openhands.core.runtime.tools.str_replace_editor import file_editor
-from tests.core.runtime.tools.str_replace_editor.conftest import (
+
+from .conftest import (
     assert_successful_result,
 )
 
