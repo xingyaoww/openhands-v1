@@ -6,6 +6,9 @@ from openhands.core.runtime.tool import Tool, ToolAnnotations
 from openhands.core.runtime.schema import ActionBase, ObservationBase
 from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
 
+from .metadata import CmdOutputMetadata
+from .constants import NO_CHANGE_TIMEOUT_SECONDS
+
 
 class ExecuteBashAction(ActionBase):
     """Schema for bash command execution."""
@@ -19,7 +22,7 @@ class ExecuteBashAction(ActionBase):
     )
     timeout: float | None = Field(
         default=None,
-        description="Optional. Sets a hard timeout in seconds for the command execution. If not provided, the command will use the default soft timeout behavior.",
+        description=f"Optional. Sets a maximum time limit (in seconds) for running the command. If the command takes longer than this limit, you’ll be asked whether to continue or stop it. If you don’t set a value, the command will instead pause and ask for confirmation when it produces no new output for {NO_CHANGE_TIMEOUT_SECONDS} seconds. Use a higher value if the command is expected to take a long time (like installation or testing), or if it has a known fixed duration (like sleep).",
     )
     security_risk: SECURITY_RISK_LITERAL = Field(description=SECURITY_RISK_DESC)
 
@@ -28,17 +31,26 @@ class ExecuteBashObservation(ObservationBase):
     """A ToolResult that can be rendered as a CLI output."""
 
     output: str = Field(
-        default="", description="The output from the command execution (stdout)."
+        description="The output message from the tool for the LLM to see."
     )
-    exit_code: int = Field(
-        default=0,
+    command: str | None = Field(
+        default=None,
+        description="The bash command that was executed. Can be empty string if the observation is from a previous command that hit soft timeout and is not yet finished.",
+    )
+    exit_code: int | None = Field(
+        default=None,
         description="The exit code of the command. -1 indicates the process hit the soft timeout and is not yet finished.",
     )
-    error: str = Field(
-        default="", description="Any error output from the command execution (stderr)."
+    error: bool = Field(
+        default=False,
+        description="Whether there was an error during command execution.",
     )
     timeout: bool = Field(
         default=False, description="Whether the command execution timed out."
+    )
+    metadata: CmdOutputMetadata = Field(
+        default_factory=CmdOutputMetadata,
+        description="Additional metadata captured from PS1 after command execution.",
     )
 
 
