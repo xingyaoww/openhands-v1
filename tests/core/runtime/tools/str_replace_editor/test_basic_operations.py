@@ -25,8 +25,12 @@ def test_file_editor_happy_path(temp_file):
 
     # Validate the result
     assert_successful_result(result, str(temp_file))
-    assert "The file" in result.output and "has been edited" in result.output
-    assert "This is a sample file." in result.output
+    assert (
+        result.output is not None
+        and "The file" in result.output
+        and "has been edited" in result.output
+    )
+    assert result.output is not None and "This is a sample file." in result.output
     assert result.path == str(temp_file)
     assert result.prev_exist is True
     assert (
@@ -65,10 +69,16 @@ match = re.search(
 
     # Validate the result
     assert_successful_result(result, str(temp_file))
-    assert "Here's the result of running `cat -n`" in result.output
-    assert "This is a file with XML tags parsing logic..." in result.output
-    assert "match = re.search(" in result.output
-    assert "...More text here." in result.output
+    assert (
+        result.output is not None
+        and "Here's the result of running `cat -n`" in result.output
+    )
+    assert (
+        result.output is not None
+        and "This is a file with XML tags parsing logic..." in result.output
+    )
+    assert result.output is not None and "match = re.search(" in result.output
+    assert result.output is not None and "...More text here." in result.output
 
 
 def test_successful_operations(temp_file):
@@ -84,8 +94,11 @@ def test_successful_operations(temp_file):
         path=str(temp_file),
     )
     assert_successful_result(result)
-    assert "Here's the result of running `cat -n`" in result.output
-    assert "line 1" in result.output
+    assert (
+        result.output is not None
+        and "Here's the result of running `cat -n`" in result.output
+    )
+    assert result.output is not None and "line 1" in result.output
 
     # Test str_replace
     result = file_editor(
@@ -95,8 +108,8 @@ def test_successful_operations(temp_file):
         new_str="replaced line",
     )
     assert_successful_result(result)
-    assert "has been edited" in result.output
-    assert "replaced line" in result.output
+    assert result.output is not None and "has been edited" in result.output
+    assert result.output is not None and "replaced line" in result.output
 
     # Test insert
     result = file_editor(
@@ -106,8 +119,8 @@ def test_successful_operations(temp_file):
         new_str="inserted line",
     )
     assert_successful_result(result)
-    assert "has been edited" in result.output
-    assert "inserted line" in result.output
+    assert result.output is not None and "has been edited" in result.output
+    assert result.output is not None and "inserted line" in result.output
 
     # Test undo
     result = file_editor(
@@ -115,7 +128,7 @@ def test_successful_operations(temp_file):
         path=str(temp_file),
     )
     assert_successful_result(result)
-    assert "undone successfully" in result.output
+    assert result.output is not None and "undone successfully" in result.output
 
 
 def test_tab_expansion(temp_file):
@@ -132,8 +145,8 @@ def test_tab_expansion(temp_file):
     )
     assert_successful_result(result)
     # Tabs should be preserved in output
-    assert "\tindented" in result.output
-    assert "line\twith\ttabs" in result.output
+    assert result.output is not None and "\tindented" in result.output
+    assert result.output is not None and "line\twith\ttabs" in result.output
 
     # Test str_replace with tabs in old_str
     result = file_editor(
@@ -143,7 +156,7 @@ def test_tab_expansion(temp_file):
         new_str="replaced line",
     )
     assert_successful_result(result)
-    assert "replaced line" in result.output
+    assert result.output is not None and "replaced line" in result.output
 
     # Test str_replace with tabs in new_str
     result = file_editor(
@@ -153,7 +166,7 @@ def test_tab_expansion(temp_file):
         new_str="new\tline\twith\ttabs",
     )
     assert_successful_result(result)
-    assert "new\tline\twith\ttabs" in result.output
+    assert result.output is not None and "new\tline\twith\ttabs" in result.output
 
     # Test insert with tabs
     result = file_editor(
@@ -163,7 +176,7 @@ def test_tab_expansion(temp_file):
         new_str="\tindented\tline",
     )
     assert_successful_result(result)
-    assert "\tindented\tline" in result.output
+    assert result.output is not None and "\tindented\tline" in result.output
 
 
 def test_create_operation(temp_file):
@@ -180,7 +193,7 @@ def test_create_operation(temp_file):
     )
 
     assert_successful_result(result, str(temp_file))
-    assert "created successfully" in result.output
+    assert result.output is not None and "created successfully" in result.output
     assert result.prev_exist is False
     assert result.new_content == content
 

@@ -6,18 +6,14 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-"""Integration tests for editor operations with non-UTF-8 encoded files."""
-
-
 import pytest
+from cachetools import LRUCache
 
 from openhands.core.runtime.tools.str_replace_editor import file_editor
 from openhands.core.runtime.tools.str_replace_editor.utils.encoding import (
     EncodingManager,
     with_encoding,
 )
-
-from cachetools import LRUCache
 
 
 @pytest.fixture
@@ -291,9 +287,9 @@ def test_view_non_utf8_file(temp_non_utf8_file):
     # Parse the result - now using direct access
 
     # Verify the content was read correctly
-    assert "Привет, мир!" in result.output
-    assert "Тестовый файл с кириллицей" in result.output
-    assert "Это тестовая строка" in result.output
+    assert result.output is not None and "Привет, мир!" in result.output
+    assert result.output is not None and "Тестовый файл с кириллицей" in result.output
+    assert result.output is not None and "Это тестовая строка" in result.output
 
 
 def test_view_range_non_utf8_file(temp_non_utf8_file):
@@ -309,11 +305,11 @@ def test_view_range_non_utf8_file(temp_non_utf8_file):
     # Parse the result - now using direct access
 
     # Verify the content was read correctly
-    assert "Тестовый файл с кириллицей" in result.output
-    assert "Привет, мир!" in result.output
+    assert result.output is not None and "Тестовый файл с кириллицей" in result.output
+    assert result.output is not None and "Привет, мир!" in result.output
 
     # Verify that line 6 is not included
-    assert "Это тестовая строка" not in result.output
+    assert result.output is not None and "Это тестовая строка" not in result.output
 
 
 def test_str_replace_non_utf8_file(temp_non_utf8_file):
@@ -330,8 +326,8 @@ def test_str_replace_non_utf8_file(temp_non_utf8_file):
     # Parse the result - now using direct access
 
     # Verify the replacement was successful
-    assert "Здравствуй, мир!" in result.output
-    assert "Привет, мир!" not in result.output
+    assert result.output is not None and "Здравствуй, мир!" in result.output
+    assert result.output is not None and "Привет, мир!" not in result.output
 
     # Verify the file was saved with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -358,7 +354,7 @@ def test_insert_non_utf8_file(temp_non_utf8_file):
     # Parse the result - now using direct access
 
     # Verify the insertion was successful
-    assert "Новая переменная" in result.output
+    assert result.output is not None and "Новая переменная" in result.output
 
     # Verify the file was saved with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -395,7 +391,9 @@ def test_create_non_utf8_file():
         # Parse the result - now using direct access
 
         # Verify the file was created successfully
-        assert "File created successfully" in result.output
+        assert (
+            result.output is not None and "File created successfully" in result.output
+        )
 
         # Read the file with cp1251 encoding to verify content
         encoding_manager = EncodingManager()
@@ -435,7 +433,7 @@ def test_undo_edit_non_utf8_file(temp_non_utf8_file):
     # Parse the result - now using direct access
 
     # Verify the undo was successful
-    assert "undone successfully" in result.output
+    assert result.output is not None and "undone successfully" in result.output
 
     # Verify the original content was restored with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -457,7 +455,7 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
     )
     # Parse the result - now using direct access
-    assert "Привет, мир!" in result.output
+    assert result.output is not None and "Привет, мир!" in result.output
 
     # 2. Replace text
     result = file_editor(
@@ -467,7 +465,7 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         new_str="Здравствуй, мир!",
     )
     # Parse the result - now using direct access
-    assert "Здравствуй, мир!" in result.output
+    assert result.output is not None and "Здравствуй, мир!" in result.output
 
     # 3. Insert text
     result = file_editor(
@@ -477,7 +475,7 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         new_str="# Добавленная строка\nboolean_var = True",
     )
     # Parse the result - now using direct access
-    assert "Добавленная строка" in result.output
+    assert result.output is not None and "Добавленная строка" in result.output
 
     # 4. View specific range
     result = file_editor(
@@ -486,8 +484,8 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         view_range=[5, 7],
     )
     # Parse the result - now using direct access
-    assert "Добавленная строка" in result.output
-    assert "boolean_var = True" in result.output
+    assert result.output is not None and "Добавленная строка" in result.output
+    assert result.output is not None and "boolean_var = True" in result.output
 
     # 5. Undo the last edit
     result = file_editor(
@@ -495,7 +493,7 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
     )
     # Parse the result - now using direct access
-    assert "undone successfully" in result.output
+    assert result.output is not None and "undone successfully" in result.output
 
     # 6. Verify the file content after all operations
     with open(temp_non_utf8_file, "rb") as f:

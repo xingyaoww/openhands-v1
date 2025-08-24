@@ -52,7 +52,7 @@ def editor_python_file_with_tabs(tmp_path):
 
 
 def assert_successful_result(
-    result: StrReplaceEditorObservation, expected_path: str = None
+    result: StrReplaceEditorObservation, expected_path: str | None = None
 ):
     """Assert that a result is successful (no error)."""
     assert isinstance(result, StrReplaceEditorObservation)
@@ -62,7 +62,7 @@ def assert_successful_result(
 
 
 def assert_error_result(
-    result: StrReplaceEditorObservation, expected_error_substring: str = None
+    result: StrReplaceEditorObservation, expected_error_substring: str | None = None
 ):
     """Assert that a result contains an error."""
     assert isinstance(result, StrReplaceEditorObservation)

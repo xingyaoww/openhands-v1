@@ -101,11 +101,11 @@ def test_file_editor_memory_leak(temp_file):
         f.write(content)
     print(f"Initial file created, size: {os.path.getsize(temp_file) / 1024:.1f} KB")
 
-    try:
-        # Store memory readings for analysis
-        memory_readings = []
-        file_size_mb = 0
+    # Store memory readings for analysis
+    memory_readings = []
+    file_size_mb = 0.0
 
+    try:
         # Perform edits with reasonable content size
         for i in range(1000):  # Increased iterations, smaller content per iteration
             # Create content for each edit - keep it small to avoid file size limits

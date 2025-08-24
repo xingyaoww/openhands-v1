@@ -37,10 +37,16 @@ def test_view_file(editor):
     editor, test_file = editor
     result = editor(command="view", path=str(test_file))
     assert isinstance(result, CLIResult)
-    assert f"Here's the result of running `cat -n` on {test_file}:" in result.output
-    assert "1\tThis is a test file." in result.output
-    assert "2\tThis file is for testing purposes." in result.output
-    assert "3\t" not in result.output  # No extra line
+    assert (
+        result.output is not None
+        and f"Here's the result of running `cat -n` on {test_file}:" in result.output
+    )
+    assert result.output is not None and "1\tThis is a test file." in result.output
+    assert (
+        result.output is not None
+        and "2\tThis file is for testing purposes." in result.output
+    )
+    assert result.output is not None and "3\t" not in result.output  # No extra line
 
 
 def test_view_directory(editor):
@@ -75,11 +81,14 @@ def test_view_with_a_specific_range(editor):
 
     # View file in range 50-100
     result = editor(command="view", path=str(test_file), view_range=[50, 100])
-    assert f"Here's the result of running `cat -n` on {test_file}:" in result.output
-    assert "    49\tLine 49" not in result.output
-    assert "    50\tLine 50" in result.output
-    assert "   100\tLine 100" in result.output
-    assert "101" not in result.output
+    assert (
+        result.output is not None
+        and f"Here's the result of running `cat -n` on {test_file}:" in result.output
+    )
+    assert result.output is not None and "    49\tLine 49" not in result.output
+    assert result.output is not None and "    50\tLine 50" in result.output
+    assert result.output is not None and "   100\tLine 100" in result.output
+    assert result.output is not None and "101" not in result.output
 
 
 def test_create_file(editor):
@@ -89,7 +98,7 @@ def test_create_file(editor):
     assert isinstance(result, ToolResult)
     assert new_file.exists()
     assert new_file.read_text() == "New file content"
-    assert "File created successfully" in result.output
+    assert result.output is not None and "File created successfully" in result.output
 
 
 def test_create_with_empty_string(editor):
@@ -99,12 +108,12 @@ def test_create_with_empty_string(editor):
     assert isinstance(result, ToolResult)
     assert new_file.exists()
     assert new_file.read_text() == ""
-    assert "File created successfully" in result.output
+    assert result.output is not None and "File created successfully" in result.output
 
     # Test the view command showing an empty line
     result = editor(command="view", path=str(new_file))
     assert f"Here's the result of running `cat -n` on {new_file}:" in result.output
-    assert "1\t" in result.output  # Check for empty line
+    assert result.output is not None and "1\t" in result.output  # Check for empty line
 
 
 def test_create_with_none_file_text(editor):
@@ -403,7 +412,7 @@ def test_undo_edit(editor):
     # Undo the edit
     result = editor(command="undo_edit", path=str(test_file))
     assert isinstance(result, CLIResult)
-    assert "Last edit to" in result.output
+    assert result.output is not None and "Last edit to" in result.output
     assert "test file" in test_file.read_text()  # Original content restored
 
 
@@ -426,13 +435,13 @@ def test_multiple_undo_edits(editor):
     # Undo the last edit
     result = editor(command="undo_edit", path=str(test_file))
     assert isinstance(result, CLIResult)
-    assert "Last edit to" in result.output
+    assert result.output is not None and "Last edit to" in result.output
     assert "sample file v1" in test_file.read_text()  # Previous content restored
 
     # Undo the first edit
     result = editor(command="undo_edit", path=str(test_file))
     assert isinstance(result, CLIResult)
-    assert "Last edit to" in result.output
+    assert result.output is not None and "Last edit to" in result.output
     assert "test file" in test_file.read_text()  # Original content restored
 
 
@@ -508,16 +517,24 @@ def test_view_directory_with_hidden_files(tmp_path):
 
     # Verify output
     assert isinstance(result, CLIResult)
-    assert str(test_dir) in result.output
-    assert "visible.txt" in result.output  # Visible file is shown
-    assert "visible_dir" in result.output  # Visible directory is shown
-    assert ".hidden1" not in result.output  # Hidden files not shown
-    assert ".hidden2" not in result.output
-    assert ".hidden_dir" not in result.output
+    assert result.output is not None and str(test_dir) in result.output
+    assert (
+        result.output is not None and "visible.txt" in result.output
+    )  # Visible file is shown
+    assert (
+        result.output is not None and "visible_dir" in result.output
+    )  # Visible directory is shown
+    assert (
+        result.output is not None and ".hidden1" not in result.output
+    )  # Hidden files not shown
+    assert result.output is not None and ".hidden2" not in result.output
+    assert result.output is not None and ".hidden_dir" not in result.output
     assert (
         "3 hidden files/directories in this directory are excluded" in result.output
     )  # Shows count of hidden items in current dir only
-    assert "ls -la" in result.output  # Shows command to view hidden files
+    assert (
+        result.output is not None and "ls -la" in result.output
+    )  # Shows command to view hidden files
 
 
 def test_view_symlinked_directory(tmp_path):
@@ -543,11 +560,11 @@ def test_view_symlinked_directory(tmp_path):
 
     # Verify that all files are listed through the symlink
     assert isinstance(result, CLIResult)
-    assert str(symlink_dir) in result.output
-    assert "file1.txt" in result.output
-    assert "file2.txt" in result.output
-    assert "subdir" in result.output
-    assert "file3.txt" in result.output
+    assert result.output is not None and str(symlink_dir) in result.output
+    assert result.output is not None and "file1.txt" in result.output
+    assert result.output is not None and "file2.txt" in result.output
+    assert result.output is not None and "subdir" in result.output
+    assert result.output is not None and "file3.txt" in result.output
 
 
 def test_view_large_directory_with_truncation(editor, tmp_path):
@@ -560,7 +577,10 @@ def test_view_large_directory_with_truncation(editor, tmp_path):
 
     result = editor(command="view", path=str(large_dir))
     assert isinstance(result, CLIResult)
-    assert DIRECTORY_CONTENT_TRUNCATED_NOTICE in result.output
+    assert (
+        result.output is not None
+        and DIRECTORY_CONTENT_TRUNCATED_NOTICE in result.output
+    )
 
 
 def test_view_directory_on_hidden_path(tmp_path):
@@ -602,18 +622,18 @@ def test_view_directory_on_hidden_path(tmp_path):
     # Verify output
     assert isinstance(result, CLIResult)
     # Depth 1: Visible files/dirs shown, hidden files/dirs not shown
-    assert "visible1.txt" in result.output
-    assert "visible_dir" in result.output
-    assert ".hidden1" not in result.output
-    assert ".hidden_dir" not in result.output
+    assert result.output is not None and "visible1.txt" in result.output
+    assert result.output is not None and "visible_dir" in result.output
+    assert result.output is not None and ".hidden1" not in result.output
+    assert result.output is not None and ".hidden_dir" not in result.output
 
     # Depth 2: Files in visible_dir shown
-    assert "visible2.txt" in result.output
-    assert ".hidden2" not in result.output
+    assert result.output is not None and "visible2.txt" in result.output
+    assert result.output is not None and ".hidden2" not in result.output
 
     # Depth 2: Files in hidden_dir not shown
-    assert "visible3.txt" not in result.output
-    assert ".hidden3" not in result.output
+    assert result.output is not None and "visible3.txt" not in result.output
+    assert result.output is not None and ".hidden3" not in result.output
 
     # Hidden file count only includes depth 1
     assert (
@@ -630,7 +650,10 @@ def test_view_large_file_with_truncation(editor, tmp_path):
 
     result = editor(command="view", path=str(large_file))
     assert isinstance(result, CLIResult)
-    assert TEXT_FILE_CONTENT_TRUNCATED_NOTICE in result.output
+    assert (
+        result.output is not None
+        and TEXT_FILE_CONTENT_TRUNCATED_NOTICE in result.output
+    )
 
 
 def test_validate_path_suggests_absolute_path(editor, tmp_path):
@@ -678,8 +701,8 @@ def test_str_replace_and_insert_snippet_output_on_a_large_file(editor):
 
     # View file
     result = editor(command="view", path=str(test_file))
-    assert "     1\tLine 1" in result.output
-    assert "   500\tLine 500" in result.output
+    assert result.output is not None and "     1\tLine 1" in result.output
+    assert result.output is not None and "   500\tLine 500" in result.output
 
     # Replace line 500's content with '500 new'
     result = editor(
@@ -688,14 +711,14 @@ def test_str_replace_and_insert_snippet_output_on_a_large_file(editor):
         old_str="Line 500",
         new_str="500 new",
     )
-    assert "   500\t500 new" in result.output
+    assert result.output is not None and "   500\t500 new" in result.output
 
     # Delete the line '500 new'
     result = editor(
         command="str_replace", path=str(test_file), old_str="500 new\n", new_str=""
     )
-    assert "   499\tLine 499" in result.output
-    assert "   500\tLine 501" in result.output
+    assert result.output is not None and "   499\tLine 499" in result.output
+    assert result.output is not None and "   500\tLine 501" in result.output
 
     # Insert content at line 500
     result = editor(
@@ -704,4 +727,4 @@ def test_str_replace_and_insert_snippet_output_on_a_large_file(editor):
         insert_line=499,
         new_str="Inserted line at 500",
     )
-    assert "   500\tInserted line at 500" in result.output
+    assert result.output is not None and "   500\tInserted line at 500" in result.output
