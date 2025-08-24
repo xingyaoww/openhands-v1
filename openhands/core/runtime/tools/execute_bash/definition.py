@@ -65,6 +65,8 @@ class ExecuteBashObservation(ObservationBase):
             ret += f"\n[Python interpreter: {self.metadata.py_interpreter_path}]"
         if self.metadata.exit_code != -1:
             ret += f"\n[Command finished with exit code {self.metadata.exit_code}]"
+        if self.error:
+            ret = f"[There was an error during command execution.]\n{ret}"
         return ret
 
 
