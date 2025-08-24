@@ -8,7 +8,7 @@ import pytest
 
 from openhands.core.runtime.tools.str_replace_editor import file_editor
 
-from .conftest import parse_result
+from .conftest import assert_successful_result
 
 
 def test_file_read_memory_usage(temp_file):
@@ -39,7 +39,6 @@ def test_file_read_memory_usage(temp_file):
             command="view",
             path=temp_file,
             view_range=[5000, 5100],  # Read 100 lines from middle
-            enable_linting=False,
         )
     except Exception as e:
         print(f"\nError during file read: {str(e)}")
@@ -61,22 +60,9 @@ def test_file_read_memory_usage(temp_file):
         f"(limit: {max_growth_mb} MB)"
     )
 
-    # Parse the JSON output
-    try:
-        result_json = parse_result(result)
-        content = result_json["formatted_output_and_error"]
-    except Exception as e:
-        print(f"\nError parsing result: {str(e)}")
-        print(f"Result: {result[:200]}...")
-        raise
-
-    # Extract the actual content (skip the header)
-    content_start = content.find("Here's the result of running `cat -n`")
-    if content_start == -1:
-        print(f"\nUnexpected content format: {content[:200]}...")
-        raise ValueError("Could not find expected content header")
-    content_start = content.find("\n", content_start) + 1
-    content = content[content_start:]
+    # Check that the result is successful and get the content
+    assert_successful_result(result)
+    content = result.output
 
     # Verify we got the correct lines
     line_count = content.count("\n")
@@ -152,10 +138,9 @@ def test_file_editor_memory_leak(temp_file):
                     path=temp_file,
                     old_str=old_content,
                     new_str=new_content,
-                    enable_linting=False,
                 )
                 if i == 0:
-                    print(f"First edit result: {result[:200]}...")
+                    print(f"First edit result: {result.output[:200]}...")
             except Exception as e:
                 print(f"\nError during edit {i}:")
                 print(f"File size: {os.path.getsize(temp_file) / (1024 * 1024):.2f} MB")

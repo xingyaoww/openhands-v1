@@ -14,9 +14,8 @@ import pytest
 from openhands.core.runtime.tools.str_replace_editor import file_editor
 from openhands.core.runtime.tools.str_replace_editor.utils.encoding import (
     EncodingManager,
+    with_encoding,
 )
-
-from .conftest import parse_result
 
 from cachetools import LRUCache
 
@@ -289,12 +288,12 @@ def test_view_non_utf8_file(temp_non_utf8_file):
     )
 
     # Parse the result
-    result_json = parse_result(result)
+    # Parse the result - now using direct access
 
     # Verify the content was read correctly
-    assert "Привет, мир!" in result_json["formatted_output_and_error"]
-    assert "Тестовый файл с кириллицей" in result_json["formatted_output_and_error"]
-    assert "Это тестовая строка" in result_json["formatted_output_and_error"]
+    assert "Привет, мир!" in result.output
+    assert "Тестовый файл с кириллицей" in result.output
+    assert "Это тестовая строка" in result.output
 
 
 def test_view_range_non_utf8_file(temp_non_utf8_file):
@@ -307,14 +306,14 @@ def test_view_range_non_utf8_file(temp_non_utf8_file):
     )
 
     # Parse the result
-    result_json = parse_result(result)
+    # Parse the result - now using direct access
 
     # Verify the content was read correctly
-    assert "Тестовый файл с кириллицей" in result_json["formatted_output_and_error"]
-    assert "Привет, мир!" in result_json["formatted_output_and_error"]
+    assert "Тестовый файл с кириллицей" in result.output
+    assert "Привет, мир!" in result.output
 
     # Verify that line 6 is not included
-    assert "Это тестовая строка" not in result_json["formatted_output_and_error"]
+    assert "Это тестовая строка" not in result.output
 
 
 def test_str_replace_non_utf8_file(temp_non_utf8_file):
@@ -325,15 +324,14 @@ def test_str_replace_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         old_str="Привет, мир!",
         new_str="Здравствуй, мир!",
-        enable_linting=False,
     )
 
     # Parse the result
-    result_json = parse_result(result)
+    # Parse the result - now using direct access
 
     # Verify the replacement was successful
-    assert "Здравствуй, мир!" in result_json["formatted_output_and_error"]
-    assert "Привет, мир!" not in result_json["formatted_output_and_error"]
+    assert "Здравствуй, мир!" in result.output
+    assert "Привет, мир!" not in result.output
 
     # Verify the file was saved with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -354,14 +352,13 @@ def test_insert_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         insert_line=4,
         new_str='new_var = "Новая переменная"',
-        enable_linting=False,
     )
 
     # Parse the result
-    result_json = parse_result(result)
+    # Parse the result - now using direct access
 
     # Verify the insertion was successful
-    assert "Новая переменная" in result_json["formatted_output_and_error"]
+    assert "Новая переменная" in result.output
 
     # Verify the file was saved with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -392,14 +389,13 @@ def test_create_non_utf8_file():
             command="create",
             path=path,
             file_text=content,
-            enable_linting=False,
         )
 
         # Parse the result
-        result_json = parse_result(result)
+        # Parse the result - now using direct access
 
         # Verify the file was created successfully
-        assert "File created successfully" in result_json["formatted_output_and_error"]
+        assert "File created successfully" in result.output
 
         # Read the file with cp1251 encoding to verify content
         encoding_manager = EncodingManager()
@@ -427,21 +423,19 @@ def test_undo_edit_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         old_str="Привет, мир!",
         new_str="Здравствуй, мир!",
-        enable_linting=False,
     )
 
     # Now undo the change
     result = file_editor(
         command="undo_edit",
         path=str(temp_non_utf8_file),
-        enable_linting=False,
     )
 
     # Parse the result
-    result_json = parse_result(result)
+    # Parse the result - now using direct access
 
     # Verify the undo was successful
-    assert "undone successfully" in result_json["formatted_output_and_error"]
+    assert "undone successfully" in result.output
 
     # Verify the original content was restored with the correct encoding
     with open(temp_non_utf8_file, "rb") as f:
@@ -462,8 +456,8 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         command="view",
         path=str(temp_non_utf8_file),
     )
-    result_json = parse_result(result)
-    assert "Привет, мир!" in result_json["formatted_output_and_error"]
+    # Parse the result - now using direct access
+    assert "Привет, мир!" in result.output
 
     # 2. Replace text
     result = file_editor(
@@ -471,10 +465,9 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         old_str="Привет, мир!",
         new_str="Здравствуй, мир!",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "Здравствуй, мир!" in result_json["formatted_output_and_error"]
+    # Parse the result - now using direct access
+    assert "Здравствуй, мир!" in result.output
 
     # 3. Insert text
     result = file_editor(
@@ -482,10 +475,9 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         insert_line=5,
         new_str="# Добавленная строка\nboolean_var = True",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "Добавленная строка" in result_json["formatted_output_and_error"]
+    # Parse the result - now using direct access
+    assert "Добавленная строка" in result.output
 
     # 4. View specific range
     result = file_editor(
@@ -493,18 +485,17 @@ def test_complex_workflow_non_utf8_file(temp_non_utf8_file):
         path=str(temp_non_utf8_file),
         view_range=[5, 7],
     )
-    result_json = parse_result(result)
-    assert "Добавленная строка" in result_json["formatted_output_and_error"]
-    assert "boolean_var = True" in result_json["formatted_output_and_error"]
+    # Parse the result - now using direct access
+    assert "Добавленная строка" in result.output
+    assert "boolean_var = True" in result.output
 
     # 5. Undo the last edit
     result = file_editor(
         command="undo_edit",
         path=str(temp_non_utf8_file),
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "undone successfully" in result_json["formatted_output_and_error"]
+    # Parse the result - now using direct access
+    assert "undone successfully" in result.output
 
     # 6. Verify the file content after all operations
     with open(temp_non_utf8_file, "rb") as f:
@@ -542,16 +533,16 @@ def test_mixed_encoding_workflow():
             command="view",
             path=path1,
         )
-        result_json1 = parse_result(result1)
-        assert "Текст в кодировке CP1251" in result_json1["formatted_output_and_error"]
+        # Parse the result - now using direct access
+        assert "Текст в кодировке CP1251" in result1.output
 
         # 2. View the UTF-8 file
         result2 = file_editor(
             command="view",
             path=path2,
         )
-        result_json2 = parse_result(result2)
-        assert "Текст в кодировке UTF-8" in result_json2["formatted_output_and_error"]
+        # Parse the result - now using direct access
+        assert "Текст в кодировке UTF-8" in result2.output
 
         # 3. Edit the cp1251 file
         result3 = file_editor(
@@ -559,10 +550,9 @@ def test_mixed_encoding_workflow():
             path=path1,
             old_str="Текст в кодировке CP1251",
             new_str="Измененный текст в CP1251",
-            enable_linting=False,
         )
-        result_json3 = parse_result(result3)
-        assert "Измененный текст в CP1251" in result_json3["formatted_output_and_error"]
+        # Parse the result - now using direct access
+        assert "Измененный текст в CP1251" in result3.output
 
         # 4. Edit the UTF-8 file
         result4 = file_editor(
@@ -570,10 +560,9 @@ def test_mixed_encoding_workflow():
             path=path2,
             old_str="Текст в кодировке UTF-8",
             new_str="Измененный текст в UTF-8",
-            enable_linting=False,
         )
-        result_json4 = parse_result(result4)
-        assert "Измененный текст в UTF-8" in result_json4["formatted_output_and_error"]
+        # Parse the result - now using direct access
+        assert "Измененный текст в UTF-8" in result4.output
 
         # 5. Verify both files maintain their original encodings
         with open(path1, "rb") as f:

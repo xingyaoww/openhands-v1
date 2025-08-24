@@ -1,8 +1,8 @@
 """Tests for error handling in file editor."""
 
-from openhands.core.runtime.tools.str_replace_editor import file_editor
+from openhands.core.runtime.tools.str_replace_editor.impl import file_editor
 
-from .conftest import parse_result
+from .conftest import assert_error_result
 
 
 def test_validation_error_formatting():
@@ -10,14 +10,9 @@ def test_validation_error_formatting():
     result = file_editor(
         command="view",
         path="/nonexistent/file.txt",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "does not exist" in result_json["formatted_output_and_error"]
-    assert (
-        result_json["error"]
-        == "Invalid `path` parameter: /nonexistent/file.txt. The path /nonexistent/file.txt does not exist. Please provide a valid path."
-    )
+    assert_error_result(result)
+    assert "does not exist" in result.error
 
     # Test directory validation for non-view commands
     result = file_editor(
@@ -25,11 +20,9 @@ def test_validation_error_formatting():
         path="/tmp",
         old_str="something",
         new_str="new",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "only the `view` command" in result_json["formatted_output_and_error"]
-    assert "directory and only the `view` command" in result_json["error"]
+    assert_error_result(result)
+    assert "directory and only the `view` command" in result.error
 
 
 def test_str_replace_error_handling(temp_file):
@@ -45,11 +38,9 @@ def test_str_replace_error_handling(temp_file):
         path=temp_file,
         old_str="nonexistent",
         new_str="something",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "did not appear verbatim" in result_json["formatted_output_and_error"]
-    assert "did not appear verbatim" in result_json["error"]
+    assert_error_result(result)
+    assert "did not appear verbatim" in result.error
 
     # Test multiple occurrences
     with open(temp_file, "w") as f:
@@ -60,11 +51,10 @@ def test_str_replace_error_handling(temp_file):
         path=temp_file,
         old_str="line",
         new_str="new_line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "Multiple occurrences" in result_json["formatted_output_and_error"]
-    assert "lines [1, 2]" in result_json["error"]
+    assert_error_result(result)
+    assert "Multiple occurrences" in result.error
+    assert "lines [1, 2]" in result.error
 
 
 def test_view_range_validation(temp_file):
@@ -79,24 +69,21 @@ def test_view_range_validation(temp_file):
         command="view",
         path=temp_file,
         view_range=[1],  # Should be [start, end]
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert (
-        "should be a list of two integers" in result_json["formatted_output_and_error"]
-    )
+    assert_error_result(result)
+    assert "should be a list of two integers" in result.error
 
     # Test out of bounds range: should clamp to file end and show a warning
     result = file_editor(
         command="view",
         path=temp_file,
         view_range=[1, 10],  # File only has 3 lines
-        enable_linting=False,
     )
-    result_json = parse_result(result)
+    # This should succeed but show a warning
+    assert result.error is None
     assert (
         "NOTE: We only show up to 3 since there're only 3 lines in this file."
-        in result_json["formatted_output_and_error"]
+        in result.output
     )
 
     # Test invalid range order
@@ -104,13 +91,9 @@ def test_view_range_validation(temp_file):
         command="view",
         path=temp_file,
         view_range=[3, 1],  # End before start
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert (
-        "should be greater than or equal to"
-        in result_json["formatted_output_and_error"]
-    )
+    assert_error_result(result)
+    assert "should be greater than or equal to" in result.error
 
 
 def test_insert_validation(temp_file):
@@ -126,10 +109,9 @@ def test_insert_validation(temp_file):
         path=temp_file,
         insert_line=-1,
         new_str="new line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "should be within the range" in result_json["formatted_output_and_error"]
+    assert_error_result(result)
+    assert "should be within the range" in result.error
 
     # Test insert beyond file length
     result = file_editor(
@@ -137,10 +119,9 @@ def test_insert_validation(temp_file):
         path=temp_file,
         insert_line=10,
         new_str="new line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "should be within the range" in result_json["formatted_output_and_error"]
+    assert_error_result(result)
+    assert "should be within the range" in result.error
 
 
 def test_undo_validation(temp_file):
@@ -154,7 +135,6 @@ def test_undo_validation(temp_file):
     result = file_editor(
         command="undo_edit",
         path=temp_file,
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "No edit history found" in result_json["formatted_output_and_error"]
+    assert_error_result(result)
+    assert "No edit history found" in result.error

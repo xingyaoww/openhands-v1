@@ -3,7 +3,9 @@
 import tempfile
 from pathlib import Path
 
-from openhands_aci.editor.history import FileHistoryManager
+from openhands.core.runtime.tools.str_replace_editor.utils.history import (
+    FileHistoryManager,
+)
 
 
 def test_default_history_limit():

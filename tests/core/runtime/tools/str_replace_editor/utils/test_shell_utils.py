@@ -3,9 +3,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openhands_aci.editor.config import MAX_RESPONSE_LEN_CHAR
-from openhands_aci.editor.prompts import CONTENT_TRUNCATED_NOTICE
-from openhands_aci.utils.shell import check_tool_installed, run_shell_cmd
+from openhands.core.runtime.tools.str_replace_editor.utils.config import (
+    MAX_RESPONSE_LEN_CHAR,
+)
+from openhands.core.runtime.tools.str_replace_editor.utils.prompts import (
+    CONTENT_TRUNCATED_NOTICE,
+)
+from openhands.core.runtime.tools.str_replace_editor.utils.shell import (
+    check_tool_installed,
+    run_shell_cmd,
+)
 
 
 def test_run_shell_cmd_success():
@@ -47,10 +54,10 @@ def test_run_shell_cmd_truncation(mock_popen):
     assert len(stderr) <= MAX_RESPONSE_LEN_CHAR + len(CONTENT_TRUNCATED_NOTICE)
 
 
-def test_check_tool_installed_whoami():
-    """Test check_tool_installed returns True for an installed tool (whoami)."""
+def test_check_tool_installed_python():
+    """Test check_tool_installed returns True for an installed tool (python)."""
     # 'python' is usually available if Python is installed
-    assert check_tool_installed("whoami") is True
+    assert check_tool_installed("python") is True
 
 
 def test_check_tool_installed_nonexistent_tool():

@@ -2,8 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from openhands_aci.editor.editor import OHEditor
-from openhands_aci.editor.exceptions import EditorToolParameterInvalidError
+from openhands.core.runtime.tools.str_replace_editor.editor import FileEditor
+from openhands.core.runtime.tools.str_replace_editor.exceptions import (
+    EditorToolParameterInvalidError,
+)
 
 
 def test_workspace_root_as_cwd(tmp_path):
@@ -17,7 +19,7 @@ def test_workspace_root_as_cwd(tmp_path):
     test_file.write_text("This is a test file")
 
     # Initialize editor with workspace_root
-    editor = OHEditor(workspace_root=str(workspace_root))
+    editor = FileEditor(workspace_root=str(workspace_root))
 
     # Test that a relative path suggestion uses the workspace_root
     relative_path = "test.txt"
@@ -54,7 +56,7 @@ def test_relative_workspace_root_raises_error(tmp_path, monkeypatch):
 
     # Initialize editor with a relative workspace_root should raise ValueError
     with pytest.raises(ValueError) as exc_info:
-        OHEditor(workspace_root="workspace")
+        FileEditor(workspace_root="workspace")
 
     # Check error message
     error_message = str(exc_info.value)
@@ -73,7 +75,7 @@ def test_no_suggestion_when_no_workspace_root(tmp_path, monkeypatch):
     monkeypatch.chdir(current_dir)
 
     # Initialize editor without workspace_root
-    editor = OHEditor()
+    editor = FileEditor()
 
     # Test that no path suggestion is made, even for existing files
     relative_path = "test.txt"

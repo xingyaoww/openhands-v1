@@ -1,15 +1,13 @@
 """Tests for basic file editor operations."""
 
-import json
-import re
-
 from openhands.core.runtime.tools.str_replace_editor import file_editor
-
-from .conftest import parse_result
+from tests.core.runtime.tools.str_replace_editor.conftest import (
+    assert_successful_result,
+)
 
 
 def test_file_editor_happy_path(temp_file):
-    command = "str_replace"
+    """Test basic str_replace operation."""
     old_str = "test file"
     new_str = "sample file"
 
@@ -19,40 +17,23 @@ def test_file_editor_happy_path(temp_file):
 
     # Call the `file_editor` function
     result = file_editor(
-        command=command,
-        path=temp_file,
+        command="str_replace",
+        path=str(temp_file),
         old_str=old_str,
         new_str=new_str,
     )
 
-    # Extract the JSON content using a regular expression
-    match = re.search(
-        r"<oh_aci_output_[0-9a-f]{32}>(.*?)</oh_aci_output_[0-9a-f]{32}>",
-        result,
-        re.DOTALL,
-    )
-    assert match, (
-        "Output does not contain the expected <oh_aci_output_> tags in the correct format."
-    )
-    result_dict = json.loads(match.group(1))
-
-    # Validate the formatted output in the result dictionary
-    formatted_output = result_dict["formatted_output_and_error"]
+    # Validate the result
+    assert_successful_result(result, str(temp_file))
+    assert "The file" in result.output and "has been edited" in result.output
+    assert "This is a sample file." in result.output
+    assert result.path == str(temp_file)
+    assert result.prev_exist is True
     assert (
-        formatted_output
-        == f"""The file {temp_file} has been edited. Here's the result of running `cat -n` on a snippet of {temp_file}:
-     1\tThis is a sample file.
-     2\tThis file is for testing purposes.
-Review the changes and make sure they are as expected. Edit the file again if necessary."""
-    )
-    assert result_dict["path"] == str(temp_file)
-    assert result_dict["prev_exist"] is True
-    assert (
-        result_dict["old_content"]
-        == "This is a test file.\nThis file is for testing purposes."
+        result.old_content == "This is a test file.\nThis file is for testing purposes."
     )
     assert (
-        result_dict["new_content"]
+        result.new_content
         == "This is a sample file.\nThis file is for testing purposes."
     )
 
@@ -62,8 +43,9 @@ Review the changes and make sure they are as expected. Edit the file again if ne
     assert "This is a sample file." in content
 
 
-def test_file_editor_with_xml_tag_parsing(temp_file):
-    # Create content that includes the XML tag pattern
+def test_file_editor_view_operation(temp_file):
+    """Test view operation with file containing special content."""
+    # Create content that includes various patterns
     xml_content = """This is a file with XML tags parsing logic...
 match = re.search(
     r'<oh_aci_output_[0-9a-f]{32}>(.*?)</oh_aci_output_[0-9a-f]{32}>',
@@ -78,36 +60,15 @@ match = re.search(
 
     result = file_editor(
         command="view",
-        path=temp_file,
+        path=str(temp_file),
     )
 
-    # Ensure the content is extracted correctly
-    match = re.search(
-        r"<oh_aci_output_[0-9a-f]{32}>(.*?)</oh_aci_output_[0-9a-f]{32}>",
-        result,
-        re.DOTALL,
-    )
-
-    assert match, (
-        "Output does not contain the expected <oh_aci_output_> tags in the correct format."
-    )
-    result_dict = json.loads(match.group(1))
-
-    # Validate the formatted output in the result dictionary
-    formatted_output = result_dict["formatted_output_and_error"]
-    assert (
-        formatted_output
-        == f"""Here's the result of running `cat -n` on {temp_file}:
-     1\tThis is a file with XML tags parsing logic...
-     2\tmatch = re.search(
-     3\t    r'<oh_aci_output_[0-9a-f]{{32}}>(.*?)</oh_aci_output_[0-9a-f]{{32}}>',
-     4\t    result,
-     5\t    re.DOTALL,
-     6\t)
-     7\t...More text here.
-     8\t
-"""
-    )
+    # Validate the result
+    assert_successful_result(result, str(temp_file))
+    assert "Here's the result of running `cat -n`" in result.output
+    assert "This is a file with XML tags parsing logic..." in result.output
+    assert "match = re.search(" in result.output
+    assert "...More text here." in result.output
 
 
 def test_successful_operations(temp_file):
@@ -120,52 +81,45 @@ def test_successful_operations(temp_file):
     # Test view
     result = file_editor(
         command="view",
-        path=temp_file,
-        enable_linting=False,
+        path=str(temp_file),
     )
-    result_json = parse_result(result)
-    assert (
-        "Here's the result of running `cat -n`"
-        in result_json["formatted_output_and_error"]
-    )
-    assert "line 1" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "Here's the result of running `cat -n`" in result.output
+    assert "line 1" in result.output
 
     # Test str_replace
     result = file_editor(
         command="str_replace",
-        path=temp_file,
+        path=str(temp_file),
         old_str="line 2",
         new_str="replaced line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "has been edited" in result_json["formatted_output_and_error"]
-    assert "replaced line" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "has been edited" in result.output
+    assert "replaced line" in result.output
 
     # Test insert
     result = file_editor(
         command="insert",
-        path=temp_file,
+        path=str(temp_file),
         insert_line=1,
         new_str="inserted line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "has been edited" in result_json["formatted_output_and_error"]
-    assert "inserted line" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "has been edited" in result.output
+    assert "inserted line" in result.output
 
     # Test undo
     result = file_editor(
         command="undo_edit",
-        path=temp_file,
-        enable_linting=False,
+        path=str(temp_file),
     )
-    result_json = parse_result(result)
-    assert "undone successfully" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "undone successfully" in result.output
 
 
 def test_tab_expansion(temp_file):
-    """Test that tabs are properly expanded in file operations."""
+    """Test that tabs are properly handled in file operations."""
     # Create a file with tabs
     content = "no tabs\n\tindented\nline\twith\ttabs\n"
     with open(temp_file, "w") as f:
@@ -174,45 +128,63 @@ def test_tab_expansion(temp_file):
     # Test view command
     result = file_editor(
         command="view",
-        path=temp_file,
-        enable_linting=False,
+        path=str(temp_file),
     )
-    result_json = parse_result(result)
-    # Tabs should be expanded to spaces in output
-    assert "\tindented" in result_json["formatted_output_and_error"]
-    assert "line\twith\ttabs" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    # Tabs should be preserved in output
+    assert "\tindented" in result.output
+    assert "line\twith\ttabs" in result.output
 
     # Test str_replace with tabs in old_str
     result = file_editor(
         command="str_replace",
-        path=temp_file,
+        path=str(temp_file),
         old_str="line\twith\ttabs",
         new_str="replaced line",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    assert "replaced line" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "replaced line" in result.output
 
     # Test str_replace with tabs in new_str
     result = file_editor(
         command="str_replace",
-        path=temp_file,
+        path=str(temp_file),
         old_str="replaced line",
         new_str="new\tline\twith\ttabs",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    # Tabs should be expanded in the output
-    assert "new\tline\twith\ttabs" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "new\tline\twith\ttabs" in result.output
 
     # Test insert with tabs
     result = file_editor(
         command="insert",
-        path=temp_file,
+        path=str(temp_file),
         insert_line=1,
         new_str="\tindented\tline",
-        enable_linting=False,
     )
-    result_json = parse_result(result)
-    # Tabs should be expanded in the output
-    assert "\tindented\tline" in result_json["formatted_output_and_error"]
+    assert_successful_result(result)
+    assert "\tindented\tline" in result.output
+
+
+def test_create_operation(temp_file):
+    """Test file creation operation."""
+    # Remove the temp file first
+    temp_file.unlink()
+
+    content = "This is a new file.\nWith multiple lines."
+
+    result = file_editor(
+        command="create",
+        path=str(temp_file),
+        file_text=content,
+    )
+
+    assert_successful_result(result, str(temp_file))
+    assert "created successfully" in result.output
+    assert result.prev_exist is False
+    assert result.new_content == content
+
+    # Verify file was created with correct content
+    with open(temp_file, "r") as f:
+        file_content = f.read()
+    assert file_content == content

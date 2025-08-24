@@ -3,13 +3,15 @@ from pathlib import Path
 import pytest
 from binaryornot.check import is_binary
 
-from openhands_aci.editor.editor import OHEditor
-from openhands_aci.editor.exceptions import FileValidationError
+from openhands.core.runtime.tools.str_replace_editor.editor import FileEditor
+from openhands.core.runtime.tools.str_replace_editor.exceptions import (
+    FileValidationError,
+)
 
 
 def test_validate_large_file(tmp_path):
     """Test that large files are rejected."""
-    editor = OHEditor()
+    editor = FileEditor()
     large_file = tmp_path / "large.txt"
 
     # Create a file just over 10MB
@@ -25,7 +27,7 @@ def test_validate_large_file(tmp_path):
 
 def test_validate_binary_file(tmp_path):
     """Test that binary files are rejected."""
-    editor = OHEditor()
+    editor = FileEditor()
     binary_file = tmp_path / "binary.bin"
 
     # Create a binary file with null bytes
@@ -39,7 +41,7 @@ def test_validate_binary_file(tmp_path):
 
 def test_validate_text_file(tmp_path):
     """Test that valid text files are accepted."""
-    editor = OHEditor()
+    editor = FileEditor()
     text_file = tmp_path / "valid.txt"
 
     # Create a valid text file
@@ -52,26 +54,28 @@ def test_validate_text_file(tmp_path):
 
 def test_validate_directory():
     """Test that directories are skipped in validation."""
-    editor = OHEditor()
+    editor = FileEditor()
     # Should not raise any exception for directories
     editor.validate_file(Path("/tmp"))
 
 
 def test_validate_nonexistent_file():
     """Test validation of nonexistent file."""
-    editor = OHEditor()
+    editor = FileEditor()
     nonexistent = Path("/nonexistent/file.txt")
     # Should not raise FileValidationError since validate_path will handle this case
     editor.validate_file(nonexistent)
 
 
-def test_validate_pdf_file():
+def test_validate_pdf_file(tmp_path):
     """Test that PDF files are detected as binary."""
-    editor = OHEditor()
+    editor = FileEditor()
 
-    # Get the current directory and construct path to the PDF file
-    current_dir = Path(__file__).parent
-    pdf_file = current_dir / "data" / "sample.pdf"
+    # Create a fake PDF file
+    pdf_file = tmp_path / "sample.pdf"
+    # Create a file with PDF header but make it text-like for the test
+    with open(pdf_file, "w") as f:
+        f.write("%PDF-1.4\nThis is a fake PDF file for testing")
 
     # the is_binary function is not accurate for PDF files
     assert not is_binary(str(pdf_file))
@@ -80,13 +84,15 @@ def test_validate_pdf_file():
     editor.validate_file(pdf_file)
 
 
-def test_validate_image_file():
+def test_validate_image_file(tmp_path):
     """Test that image files are detected as binary."""
-    editor = OHEditor()
+    editor = FileEditor()
 
-    # Get the current directory and construct path to the image file
-    current_dir = Path(__file__).parent.parent
-    image_file = current_dir / "data" / "oh-logo.png"
+    # Create a fake binary image file
+    image_file = tmp_path / "test_image.png"
+    # Create a file with PNG header to make it binary
+    with open(image_file, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01")
 
     assert is_binary(str(image_file))
 

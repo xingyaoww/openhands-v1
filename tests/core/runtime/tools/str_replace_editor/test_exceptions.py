@@ -1,6 +1,6 @@
 import pytest
 
-from openhands_aci.editor.exceptions import (
+from openhands.core.runtime.tools.str_replace_editor.exceptions import (
     EditorToolParameterInvalidError,
     EditorToolParameterMissingError,
     ToolError,
