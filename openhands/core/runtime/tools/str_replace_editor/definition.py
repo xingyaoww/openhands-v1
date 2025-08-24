@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from openhands.core.runtime.tool import Tool, ToolAnnotations
-from openhands.core.runtime.schema import ActionBase
+from openhands.core.runtime.schema import ActionBase, ObservationBase
 from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
 
 CommandLiteral = Literal["view", "create", "str_replace", "insert", "undo_edit"]
@@ -41,6 +41,26 @@ class StrReplaceEditorAction(ActionBase):
         description="Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.",
     )
     security_risk: SECURITY_RISK_LITERAL = Field(description=SECURITY_RISK_DESC)
+
+
+class StrReplaceEditorObservation(ObservationBase):
+    """A ToolResult that can be rendered as a CLI output."""
+
+    output: str = Field(
+        default="", description="The output message from the tool for the LLM to see."
+    )
+    path: str | None = Field(default=None, description="The file path that was edited.")
+    prev_exist: bool = Field(
+        default=True,
+        description="Indicates if the file previously existed. If not, it was created.",
+    )
+    old_content: str | None = Field(
+        default=None, description="The content of the file before the edit."
+    )
+    new_content: str | None = Field(
+        default=None, description="The content of the file after the edit."
+    )
+    error: str | None = Field(default=None, description="Error message if any.")
 
 
 Command = Literal[
