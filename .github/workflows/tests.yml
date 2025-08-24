@@ -2,6 +2,12 @@ name: Run tests
 on:
   push:
     branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   tests:
@@ -24,5 +30,36 @@ jobs:
       - name: Install project (editable)
         run: uv pip install -e .
 
-      - name: Run pytest
-        run: uv run pytest -v tests/
+      - name: Run tests with coverage
+        run: uv run pytest -v --cov=openhands --cov-report=xml:coverage.xml --cov-report=term-missing tests/
+
+      - name: Code Coverage Summary
+        if: always()
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+
+      - name: Add Coverage PR Comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-artifacts
+          path: |
+            coverage.xml
+            code-coverage-results.md
+          if-no-files-found: ignore
