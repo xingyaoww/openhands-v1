@@ -5,6 +5,8 @@ description = "OpenHands: Code Less, Make More"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "binaryornot>=0.4.4",
+    "cachetools>=6.1.0",
     "fastmcp>=2.11.3",
     "litellm>=1.75.9",
     "pydantic>=2.11.7",
@@ -13,5 +15,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
+    "psutil>=7.0.0",
+    "pyright>=1.1.404",
+    "pytest>=8.4.1",
     "ruff>=0.12.10",
 ]
