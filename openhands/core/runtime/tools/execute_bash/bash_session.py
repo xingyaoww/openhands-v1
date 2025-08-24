@@ -6,16 +6,16 @@ from enum import Enum
 
 import libtmux
 from openhands.core.logger import get_logger
-from ..definition import ExecuteBashAction, ExecuteBashObservation
-from ..metadata import CmdOutputMetadata
-from ..constants import (
+from .definition import ExecuteBashAction, ExecuteBashObservation
+from .metadata import CmdOutputMetadata
+from .constants import (
     TIMEOUT_MESSAGE_TEMPLATE,
     CMD_OUTPUT_PS1_END,
     POLL_INTERVAL,
     HISTORY_LIMIT,
     NO_CHANGE_TIMEOUT_SECONDS,
 )
-from ..utils.command import split_bash_commands, escape_bash_special_chars
+from .utils.command import split_bash_commands, escape_bash_special_chars
 
 logger = get_logger(__name__)
 
