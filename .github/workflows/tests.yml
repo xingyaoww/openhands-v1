@@ -117,8 +117,8 @@ jobs:
           name: coverage-badge
           path: docs/assets/coverage.svg
 
-      - name: Commit coverage badge (push builds)
-        if: ${{ always() && github.event_name == 'push' }}
+      - name: Commit coverage badge (push builds on non-main branches)
+        if: ${{ always() && github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         uses: EndBug/add-and-commit@v9
         with:
           add: "docs/assets/coverage.svg"
