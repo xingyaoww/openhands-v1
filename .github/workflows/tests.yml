@@ -93,6 +93,10 @@ jobs:
           echo "color=$COLOR" >> $GITHUB_OUTPUT
           echo "pct=$PCT" >> $GITHUB_OUTPUT
 
+      - name: Ensure badges directory
+        if: always()
+        run: mkdir -p badges
+
       - name: Generate coverage badge
         if: always()
         uses: emibcn/badge-action@v2.0.2
