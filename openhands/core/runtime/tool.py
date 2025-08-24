@@ -1,14 +1,33 @@
 from typing import Any, Callable
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from .schema import ActionBase, ObservationBase, Schema
 
 
 class ToolAnnotations(BaseModel):
-    title: str | None = None
-    readOnlyHint: bool | None = None
-    destructiveHint: bool | None = None
-    idempotentHint: bool | None = None
-    openWorldHint: bool | None = None
+    """Annotations to provide hints about the tool's behavior.
+
+    Based on Model Context Protocol (MCP) spec: https://github.com/modelcontextprotocol/modelcontextprotocol/blob/caf3424488b10b4a7b1f8cb634244a450a1f4400/schema/2025-06-18/schema.ts#L838
+    """
+
+    title: str | None = Field(
+        default=None, description="A human-readable title for the tool."
+    )
+    readOnlyHint: bool = Field(
+        default=False,
+        description="If true, the tool does not modify its environment. Default: false",
+    )
+    destructiveHint: bool = Field(
+        default=True,
+        description="If true, the tool may perform destructive updates to its environment. If false, the tool performs only additive updates. (This property is meaningful only when `readOnlyHint == false`) Default: true",
+    )
+    idempotentHint: bool = Field(
+        default=False,
+        description="If true, calling the tool repeatedly with the same arguments will have no additional effect on the its environment. (This property is meaningful only when `readOnlyHint == false`) Default: false",
+    )
+    openWorldHint: bool = Field(
+        default=True,
+        description="If true, this tool may interact with an 'open world' of external entities. If false, the tool's domain of interaction is closed. For example, the world of a web search tool is open, whereas that of a memory tool is not. Default: true",
+    )
 
 
 class Tool:
