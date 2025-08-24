@@ -53,6 +53,23 @@ class ExecuteBashObservation(ObservationBase):
         description="Additional metadata captured from PS1 after command execution.",
     )
 
+    @property
+    def command_id(self) -> int | None:
+        """Get the command ID from metadata."""
+        return self.metadata.pid
+
+    @property
+    def message(self) -> str:
+        """Get a formatted message describing the command execution."""
+        parts = []
+        if self.command:
+            parts.append(f"Command: {self.command}")
+        if self.exit_code is not None:
+            parts.append(f"exit code {self.exit_code}")
+        if self.error:
+            parts.append("(error)")
+        return " - ".join(parts) if parts else ""
+
 
 TOOL_DESCRIPTION = """Execute a bash command in the terminal within a persistent shell session.
 

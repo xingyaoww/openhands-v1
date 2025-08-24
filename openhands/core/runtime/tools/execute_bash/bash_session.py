@@ -39,11 +39,16 @@ class BashSession:
         work_dir: str,
         username: str | None = None,
         max_memory_mb: int | None = None,
+        no_change_timeout_seconds: int | None = None,
     ):
         self.work_dir = work_dir
         self.username = username
         self._initialized = False
         self.max_memory_mb = max_memory_mb
+        self.no_change_timeout_seconds = (
+            no_change_timeout_seconds or NO_CHANGE_TIMEOUT_SECONDS
+        )
+        self._closed = False
 
     def initialize(self) -> None:
         self.server = libtmux.Server()
@@ -85,17 +90,17 @@ class BashSession:
             f'export PROMPT_COMMAND=\'export PS1="{self.PS1}"\'; export PS2=""'
         )
         time.sleep(0.1)  # Wait for command to take effect
-        self._clear_screen()
 
         # Store the last command for interactive input handling
         self.prev_status: BashCommandStatus | None = None
         self.prev_output: str = ""
-        self._closed: bool = False
         logger.debug(f"Bash session initialized with work dir: {self.work_dir}")
 
         # Maintain the current working directory
         self._cwd = os.path.abspath(self.work_dir)
         self._initialized = True
+
+        self._clear_screen()
 
     def __del__(self) -> None:
         """Ensure the session is closed when the object is destroyed."""
@@ -118,7 +123,8 @@ class BashSession:
         """Clean up the session."""
         if self._closed:
             return
-        self.session.kill()
+        if hasattr(self, "session"):
+            self.session.kill()
         self._closed = True
 
     @property
@@ -234,7 +240,7 @@ class BashSession:
         )
         metadata = CmdOutputMetadata()  # No metadata available
         metadata.suffix = (
-            f"\n[The command has no new output after {NO_CHANGE_TIMEOUT_SECONDS} seconds. "
+            f"\n[The command has no new output after {self.no_change_timeout_seconds} seconds. "
             f"{TIMEOUT_MESSAGE_TEMPLATE}]"
         )
         command_output = self._get_command_output(
@@ -479,9 +485,12 @@ class BashSession:
             time_since_last_change = time.time() - last_change_time
             is_blocking = action.timeout is not None
             logger.debug(
-                f"CHECKING NO CHANGE TIMEOUT ({NO_CHANGE_TIMEOUT_SECONDS}s): elapsed {time_since_last_change}. Action blocking: {is_blocking}"
+                f"CHECKING NO CHANGE TIMEOUT ({self.no_change_timeout_seconds}s): elapsed {time_since_last_change}. Action blocking: {is_blocking}"
             )
-            if is_blocking and time_since_last_change >= NO_CHANGE_TIMEOUT_SECONDS:
+            if (
+                not is_blocking
+                and time_since_last_change >= self.no_change_timeout_seconds
+            ):
                 return self._handle_nochange_timeout_command(
                     command,
                     pane_content=cur_pane_output,
