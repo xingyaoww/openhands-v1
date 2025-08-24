@@ -5,10 +5,12 @@ description = "OpenHands: Code Less, Make More"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "bashlex>=0.18",
     "binaryornot>=0.4.4",
     "cachetools>=6.1.0",
     "fastmcp>=2.11.3",
     "json-repair>=0.50.0",
+    "libtmux>=0.46.2",
     "litellm>=1.75.9",
     "pydantic>=2.11.7",
     "tenacity>=9.1.2",

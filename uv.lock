@@ -120,6 +120,15 @@ wheels = [
 ]
 
 [[package]]
+name = "bashlex"
+version = "0.18"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/60/aae0bb54f9af5e0128ba90eb83d8d0d506ee8f0475c4fdda3deeda20b1d2/bashlex-0.18.tar.gz", hash = "sha256:5bb03a01c6d5676338c36fd1028009c8ad07e7d61d8a1ce3f513b7fff52796ee", size = 68742, upload-time = "2023-01-18T15:21:26.402Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/be/6985abb1011fda8a523cfe21ed9629e397d6e06fb5bae99750402b25c95b/bashlex-0.18-py2.py3-none-any.whl", hash = "sha256:91d73a23a3e51711919c1c899083890cdecffc91d8c088942725ac13e9dcfffa", size = 69539, upload-time = "2023-01-18T15:21:24.167Z" },
+]
+
+[[package]]
 name = "binaryornot"
 version = "0.4.4"
 source = { registry = "https://pypi.org/simple" }
@@ -819,6 +828,15 @@ wheels = [
 ]
 
 [[package]]
+name = "libtmux"
+version = "0.46.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9c/aa/7e1dcaa097156d6f3a7d8669be4389dced997feeb81744e3ff4681d65ee8/libtmux-0.46.2.tar.gz", hash = "sha256:9a398fec5d714129c8344555d466e1a903dfc0f741ba07aabe75a8ceb25c5dda", size = 346887, upload-time = "2025-05-26T19:40:04.096Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/2f/9d207039fcfa00d3b30e4d765f062fbcc42c873c7518a8cfebb3eafd00e0/libtmux-0.46.2-py3-none-any.whl", hash = "sha256:6c32dbf22bde8e5e33b2714a4295f6e838dc640f337cd4c085a044f6828c7793", size = 60873, upload-time = "2025-05-26T19:40:02.284Z" },
+]
+
+[[package]]
 name = "litellm"
 version = "1.75.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1087,10 +1105,12 @@ name = "openhands"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "bashlex" },
     { name = "binaryornot" },
     { name = "cachetools" },
     { name = "fastmcp" },
     { name = "json-repair" },
+    { name = "libtmux" },
     { name = "litellm" },
     { name = "pydantic" },
     { name = "tenacity" },
@@ -1108,10 +1128,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bashlex", specifier = ">=0.18" },
     { name = "binaryornot", specifier = ">=0.4.4" },
     { name = "cachetools", specifier = ">=6.1.0" },
     { name = "fastmcp", specifier = ">=2.11.3" },
     { name = "json-repair", specifier = ">=0.50.0" },
+    { name = "libtmux", specifier = ">=0.46.2" },
     { name = "litellm", specifier = ">=1.75.9" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "tenacity", specifier = ">=9.1.2" },

@@ -2,6 +2,8 @@ name: Run tests
 on:
   push:
     branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 permissions:
   contents: write
@@ -32,10 +34,11 @@ jobs:
         run: uv run pytest -v --cov=openhands --cov-report=xml:coverage.xml --cov-report=term-missing tests/
 
       - name: Code Coverage Summary
-        if: always()
+        if: ${{ always() && hashFiles('coverage.xml') != '' }}
+        continue-on-error: true
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: coverage.xml
+          files: coverage.xml
           badge: true
           fail_below_min: false
           format: markdown
@@ -60,9 +63,10 @@ jobs:
           path: |
             coverage.xml
             code-coverage-results.md
+            docs/assets/coverage.svg
           if-no-files-found: ignore
       - name: Parse coverage percent
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         id: parsecov
         run: |
           python - << 'PY'
@@ -81,7 +85,7 @@ jobs:
           PY
 
       - name: Determine badge color
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         id: color
         run: |
           PCT=$(cat coverage_percent.txt || echo 0)
@@ -93,30 +97,30 @@ jobs:
           echo "color=$COLOR" >> $GITHUB_OUTPUT
           echo "pct=$PCT" >> $GITHUB_OUTPUT
 
-      - name: Ensure badges directory
-        if: always()
-        run: mkdir -p badges
+      - name: Ensure docs/assets directory
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        run: mkdir -p docs/assets
 
       - name: Generate coverage badge
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         uses: emibcn/badge-action@v2.0.2
         with:
           label: coverage
           status: "${{ steps.color.outputs.pct }}%"
           color: "${{ steps.color.outputs.color }}"
-          path: badges/coverage.svg
+          path: docs/assets/coverage.svg
 
       - name: Upload badge artifact (PRs)
         if: ${{ always() && github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-badge
-          path: badges/coverage.svg
+          path: docs/assets/coverage.svg
 
-      - name: Commit coverage badge (push builds)
-        if: ${{ always() && github.event_name == 'push' }}
+      - name: Commit coverage badge (push builds on non-main branches)
+        if: ${{ always() && github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         uses: EndBug/add-and-commit@v9
         with:
-          add: "badges/coverage.svg"
+          add: "docs/assets/coverage.svg"
           message: "docs: update coverage badge [skip ci]"
           default_author: github_actions
