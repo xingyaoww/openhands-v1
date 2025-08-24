@@ -1,5 +1,7 @@
 # Prototype for OpenHands V1
 
+[![Coverage](badges/coverage.svg)](./badges/coverage.svg)
+
 This folder contains my tasks of completely refactor [OpenHands](https://github.com/All-Hands-AI/OpenHands) project V0 into the new V1 version. There's a lot of changes, including (non-exhausive):
 
 - Switching from poetry to uv as package manager
