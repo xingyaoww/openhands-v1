@@ -2,6 +2,8 @@ name: Run tests
 on:
   push:
     branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 permissions:
   contents: write
@@ -64,7 +66,7 @@ jobs:
             docs/assets/coverage.svg
           if-no-files-found: ignore
       - name: Parse coverage percent
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         id: parsecov
         run: |
           python - << 'PY'
@@ -83,7 +85,7 @@ jobs:
           PY
 
       - name: Determine badge color
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         id: color
         run: |
           PCT=$(cat coverage_percent.txt || echo 0)
@@ -96,11 +98,11 @@ jobs:
           echo "pct=$PCT" >> $GITHUB_OUTPUT
 
       - name: Ensure docs/assets directory
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         run: mkdir -p docs/assets
 
       - name: Generate coverage badge
-        if: always()
+        if: ${{ always() && github.event_name == 'pull_request' }}
         uses: emibcn/badge-action@v2.0.2
         with:
           label: coverage
@@ -115,8 +117,8 @@ jobs:
           name: coverage-badge
           path: docs/assets/coverage.svg
 
-      - name: Commit coverage badge (push builds)
-        if: ${{ always() && github.event_name == 'push' }}
+      - name: Commit coverage badge (push builds on non-main branches)
+        if: ${{ always() && github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         uses: EndBug/add-and-commit@v9
         with:
           add: "docs/assets/coverage.svg"
