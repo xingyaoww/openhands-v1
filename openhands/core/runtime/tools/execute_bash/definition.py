@@ -30,9 +30,7 @@ class ExecuteBashAction(ActionBase):
 class ExecuteBashObservation(ObservationBase):
     """A ToolResult that can be rendered as a CLI output."""
 
-    output: str = Field(
-        description="The output message from the tool for the LLM to see."
-    )
+    output: str = Field(description="The raw output from the tool.")
     command: str | None = Field(
         default=None,
         description="The bash command that was executed. Can be empty string if the observation is from a previous command that hit soft timeout and is not yet finished.",
@@ -59,16 +57,15 @@ class ExecuteBashObservation(ObservationBase):
         return self.metadata.pid
 
     @property
-    def message(self) -> str:
-        """Get a formatted message describing the command execution."""
-        parts = []
-        if self.command:
-            parts.append(f"Command: {self.command}")
-        if self.exit_code is not None:
-            parts.append(f"exit code {self.exit_code}")
-        if self.error:
-            parts.append("(error)")
-        return " - ".join(parts) if parts else ""
+    def agent_observation(self) -> str:
+        ret = f"{self.metadata.prefix}{self.output}{self.metadata.suffix}"
+        if self.metadata.working_dir:
+            ret += f"\n[Current working directory: {self.metadata.working_dir}]"
+        if self.metadata.py_interpreter_path:
+            ret += f"\n[Python interpreter: {self.metadata.py_interpreter_path}]"
+        if self.metadata.exit_code != -1:
+            ret += f"\n[Command finished with exit code {self.metadata.exit_code}]"
+        return ret
 
 
 TOOL_DESCRIPTION = """Execute a bash command in the terminal within a persistent shell session.

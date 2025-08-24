@@ -7,7 +7,7 @@ from openhands.core.runtime.tools.execute_bash.constants import (
 )
 from openhands.core.runtime.tools.execute_bash.metadata import CmdOutputMetadata
 from openhands.core.runtime.tools.execute_bash.definition import (
-    ExecuteBashObservation as CmdOutputObservation,
+    ExecuteBashObservation,
 )
 
 
@@ -269,32 +269,30 @@ def test_ps1_metadata_regex_pattern():
 
 
 def test_cmd_output_observation_properties():
-    """Test CmdOutputObservation class properties"""
+    """Test ExecuteBashObservation class properties"""
     # Test with successful command
     metadata = CmdOutputMetadata(exit_code=0, pid=123)
-    obs = CmdOutputObservation(
+    obs = ExecuteBashObservation(
         command="ls", output="file1\nfile2", exit_code=0, metadata=metadata
     )
     assert obs.command_id == 123
     assert obs.exit_code == 0
     assert not obs.error
-    assert "exit code 0" in obs.message
-    assert "ls" in obs.message
-    assert "file1" in str(obs)
-    assert "file2" in str(obs)
-    assert "metadata" in str(obs)
+    assert "exit code 0" in obs.agent_observation
+    assert "ls" not in obs.agent_observation
+    assert "file1\n" in obs.agent_observation
+    assert "file2\n" in obs.agent_observation
 
     # Test with failed command
     metadata = CmdOutputMetadata(exit_code=1, pid=456)
-    obs = CmdOutputObservation(
+    obs = ExecuteBashObservation(
         command="invalid", output="error", exit_code=1, error=True, metadata=metadata
     )
     assert obs.command_id == 456
     assert obs.exit_code == 1
     assert obs.error
-    assert "exit code 1" in obs.message
-    assert "invalid" in obs.message
-    assert "error" in str(obs)
+    assert "exit code 1" in obs.agent_observation
+    assert obs.error
 
 
 def test_ps1_metadata_empty_fields():
