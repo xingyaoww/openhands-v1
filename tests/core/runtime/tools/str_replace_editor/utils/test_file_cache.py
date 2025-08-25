@@ -93,6 +93,7 @@ def test_iter(file_cache):
 
 @pytest.mark.skipif(
     os.environ.get("CI", "false").lower() == "true",
+    reason="Skip large value test on CI since it will break due to memory limits",
 )
 def test_large_value(file_cache):
     large_value = "x" * 1024 * 1024  # 1 MB string
