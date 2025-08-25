@@ -14,7 +14,6 @@ from openhands.core.runtime.tools.execute_bash.definition import (
 def test_ps1_metadata_format():
     """Test that PS1 prompt has correct format markers"""
     prompt = CmdOutputMetadata.to_ps1_prompt()
-    print(prompt)
     assert prompt.startswith("\n###PS1JSON###\n")
     assert prompt.endswith("\n###PS1END###\n")
     assert r"\"exit_code\"" in prompt, "PS1 prompt should contain escaped double quotes"

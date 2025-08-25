@@ -6,7 +6,7 @@ import pytest
 from pydantic import Field
 
 from openhands.core.runtime.schema import ActionBase, ObservationBase
-from openhands.core.runtime.tool import Tool, ToolAnnotations
+from openhands.core.runtime.tool import Tool, ToolAnnotations, ToolExecutor
 
 
 class MockAction(ActionBase):
@@ -41,23 +41,24 @@ class TestTool:
         assert tool.description == "A test tool"
         assert tool.action_type == MockAction
         assert tool.observation_type == MockObservation
-        assert tool.execute_fn is None
+        assert tool.executor is None
 
     def test_tool_creation_with_executor(self):
         """Test tool creation with executor function."""
 
-        def mock_executor(action: MockAction) -> MockObservation:
-            return MockObservation(result=f"Executed: {action.command}")
+        class MockExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                return MockObservation(result=f"Executed: {action.command}")
 
         tool = Tool(
             name="test_tool",
             description="A test tool",
             input_schema=MockAction,
             output_schema=MockObservation,
-            execute_fn=mock_executor,
+            executor=MockExecutor(),
         )
 
-        assert tool.execute_fn is not None
+        assert tool.executor is not None
         action = MockAction(command="test")
         result = tool.call(action)
         assert isinstance(result, MockObservation)
@@ -150,15 +151,16 @@ class TestTool:
     def test_call_with_executor(self):
         """Test calling tool with executor."""
 
-        def mock_executor(action: MockAction) -> MockObservation:
-            return MockObservation(result=f"Processed: {action.command}")
+        class MockExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                return MockObservation(result=f"Processed: {action.command}")
 
         tool = Tool(
             name="test_tool",
             description="A test tool",
             input_schema=MockAction,
             output_schema=MockObservation,
-            execute_fn=mock_executor,
+            executor=MockExecutor(),
         )
 
         action = MockAction(command="test_command")
@@ -199,16 +201,16 @@ class TestTool:
     def test_observation_type_validation(self):
         """Test that observation type is properly validated."""
 
-        def mock_executor(action: ActionBase) -> MockObservation:
-            # Return correct observation type
-            return MockObservation(result="success")
+        class MockExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                return MockObservation(result="success")
 
         tool = Tool(
             name="test_tool",
             description="A test tool",
             input_schema=MockAction,
             output_schema=MockObservation,
-            execute_fn=mock_executor,
+            executor=MockExecutor(),
         )
 
         action = MockAction(command="test")
@@ -221,15 +223,16 @@ class TestTool:
     def test_observation_with_extra_fields(self):
         """Test observation with additional fields."""
 
-        def mock_executor(action: ActionBase) -> MockObservation:
-            return MockObservation(result="test", extra_field="extra_data")
+        class MockExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                return MockObservation(result="test", extra_field="extra_data")
 
         tool = Tool(
             name="test_tool",
             description="A test tool",
             input_schema=MockAction,
             output_schema=MockObservation,
-            execute_fn=mock_executor,
+            executor=MockExecutor(),
         )
 
         action = MockAction(command="test")
@@ -306,13 +309,14 @@ class TestTool:
         )
 
         # Initially no executor
-        assert tool.execute_fn is None
+        assert tool.executor is None
 
         # Attach executor
-        def mock_executor(action: MockAction) -> MockObservation:
-            return MockObservation(result=f"Attached: {action.command}")
+        class MockExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                return MockObservation(result=f"Attached: {action.command}")
 
-        tool.execute_fn = mock_executor
+        tool.executor = MockExecutor()
 
         # Now it should work
         action = MockAction(command="test")
@@ -349,18 +353,19 @@ class TestTool:
             )
             count: int = Field(default=0, description="Count field")
 
-        def complex_executor(action: MockAction) -> ComplexObservation:
-            return ComplexObservation(
-                data={"processed": action.command, "timestamp": 12345},
-                count=len(action.command) if hasattr(action, "command") else 0,
-            )
+        class MockComplexExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> ComplexObservation:
+                return ComplexObservation(
+                    data={"processed": action.command, "timestamp": 12345},
+                    count=len(action.command) if hasattr(action, "command") else 0,
+                )
 
         tool = Tool(
             name="complex_tool",
             description="Tool with complex observation",
             input_schema=MockAction,
             output_schema=ComplexObservation,
-            execute_fn=complex_executor,
+            executor=MockComplexExecutor(),
         )
 
         action = MockAction(command="test_command")
@@ -373,15 +378,16 @@ class TestTool:
     def test_error_handling_in_executor(self):
         """Test error handling when executor raises exceptions."""
 
-        def failing_executor(action: ActionBase) -> MockObservation:
-            raise RuntimeError("Executor failed")
+        class FailingExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> MockObservation:
+                raise RuntimeError("Executor failed")
 
         tool = Tool(
             name="failing_tool",
             description="Tool that fails",
             input_schema=MockAction,
             output_schema=MockObservation,
-            execute_fn=failing_executor,
+            executor=FailingExecutor(),
         )
 
         action = MockAction(command="test")
@@ -395,15 +401,16 @@ class TestTool:
             message: str = Field(description="Required message field")
             value: int = Field(description="Required value field")
 
-        def valid_executor(action: MockAction) -> StrictObservation:
-            return StrictObservation(message="success", value=42)
+        class ValidExecutor(ToolExecutor):
+            def __call__(self, action: MockAction) -> StrictObservation:
+                return StrictObservation(message="success", value=42)
 
         tool = Tool(
             name="strict_tool",
             description="Tool with strict observation",
             input_schema=MockAction,
             output_schema=StrictObservation,
-            execute_fn=valid_executor,
+            executor=ValidExecutor(),
         )
 
         action = MockAction(command="test")

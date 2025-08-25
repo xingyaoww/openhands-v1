@@ -1,5 +1,5 @@
 [project]
-name = "openhands"
+name = "openhands-ai"
 version = "1.0.0"
 description = "OpenHands: Code Less, Make More"
 readme = "README.md"
@@ -13,6 +13,7 @@ dependencies = [
     "libtmux>=0.46.2",
     "litellm>=1.75.9",
     "pydantic>=2.11.7",
+    "python-frontmatter>=1.1.0",
     "tenacity>=9.1.2",
 ]
 
@@ -25,3 +26,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.12.10",
 ]
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"

@@ -76,7 +76,7 @@ class LLM(RetryMixin):
     def __init__(
         self,
         config: LLMConfig,
-        service_id: str,
+        service_id: str = "default",
         metrics: Metrics | None = None,
         retry_listener: Callable[[int, int], None] | None = None,
     ) -> None:

@@ -59,9 +59,6 @@ done
     ]
     joined_cmds = "\n".join(cmds)
     split_cmds = split_bash_commands(joined_cmds)
-    for s in split_cmds:
-        print("\nCMD")
-        print(s)
     for i in range(len(cmds)):
         assert split_cmds[i].strip() == cmds[i].strip(), (
             f"At index {i}: {split_cmds[i]} != {cmds[i]}."

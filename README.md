@@ -17,4 +17,21 @@ This folder contains my tasks of completely refactor [OpenHands](https://github.
     - read [openhands/core/runtime/tools/str_replace_editor/impl.py](openhands/core/runtime/tools/str_replace_editor/impl.py) for tool execute_fn
     - read [openhands/core/runtime/tools/str_replace_editor/definition.py](openhands/core/runtime/tools/str_replace_editor/definition.py) for how do we define a tool
     - read [openhands/core/runtime/tools/str_replace_editor/__init__.py](openhands/core/runtime/tools/str_replace_editor/__init__.py) for how we define each tool module
+- tools: `str_replace_editor`, `execute_bash`
+- minimal config (OpenHandsConfig, LLMConfig, MCPConfig): `openhands/core/config`
+- core set of LLM (w/o tests): `openhands/core/llm`
+- core set of microagent functionality (w/o full integration):
+  - `openhands/core/context`: redesigned the triggering of microagents w.r.t. agents into the concept of two types context
+    - EnvContext (triggered at the begining of a convo)
+    - MessageContext (triggered at each user message)
+  - `openhands-v1/openhands/core/microagents`: old code from V1 that loads microagents from folders, etc
+- minimal implementation of codeact agent: `openhands-v1/openhands/core/agenthub/codeact_agent`
 - ...
+
+
+**Check hello world example**
+
+```bash
+uv sync
+uv run python examples/hello.py
+```

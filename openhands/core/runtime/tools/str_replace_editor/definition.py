@@ -64,6 +64,8 @@ class StrReplaceEditorObservation(ObservationBase):
 
     @property
     def agent_observation(self) -> str:
+        if self.error:
+            return self.error
         return self.output
 
 

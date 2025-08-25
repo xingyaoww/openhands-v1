@@ -91,6 +91,10 @@ def test_iter(file_cache):
     assert keys == {"key1", "key2", "folder/key3"}
 
 
+@pytest.mark.skipif(
+    os.environ.get("CI", "false").lower() == "true",
+    reason="Skip large value test on CI since it will break due to memory limits",
+)
 def test_large_value(file_cache):
     large_value = "x" * 1024 * 1024  # 1 MB string
     file_cache.set("large_key", large_value)

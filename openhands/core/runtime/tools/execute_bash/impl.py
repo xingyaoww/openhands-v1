@@ -1,0 +1,16 @@
+from .bash_session import BashSession
+from .definition import ExecuteBashAction, ExecuteBashObservation
+from ...tool import ToolExecutor
+
+
+class BashExecutor(ToolExecutor):
+    def __init__(
+        self,
+        working_dir: str,
+        username: str | None = None,
+    ):
+        self.session = BashSession(working_dir, username=username)
+        self.session.initialize()
+
+    def __call__(self, action: ExecuteBashAction) -> ExecuteBashObservation:
+        return self.session.execute(action)
