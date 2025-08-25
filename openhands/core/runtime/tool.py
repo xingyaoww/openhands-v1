@@ -1,9 +1,11 @@
 import re
 from typing import Any, TypeVar, Generic
 from pydantic import BaseModel, Field
+
 from .schema import ActionBase, ObservationBase, Schema
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params.function_definition import FunctionDefinition
+
 
 ActionT = TypeVar("ActionT", bound=ActionBase)
 ObservationT = TypeVar("ObservationT", bound=ObservationBase)
@@ -20,9 +22,7 @@ class ToolAnnotations(BaseModel):
     Based on Model Context Protocol (MCP) spec: https://github.com/modelcontextprotocol/modelcontextprotocol/blob/caf3424488b10b4a7b1f8cb634244a450a1f4400/schema/2025-06-18/schema.ts#L838
     """
 
-    title: str | None = Field(
-        default=None, description="A human-readable title for the tool."
-    )
+    title: str | None = Field(default=None, description="A human-readable title for the tool.")
     readOnlyHint: bool = Field(
         default=False,
         description="If true, the tool does not modify its environment. Default: false",
@@ -82,9 +82,7 @@ class Tool(Generic[ActionT, ObservationT]):
         self.executor = executor
         return self
 
-    def _set_input_schema(
-        self, input_schema: dict[str, Any] | type[ActionBase]
-    ) -> None:
+    def _set_input_schema(self, input_schema: dict[str, Any] | type[ActionBase]) -> None:
         # ---- INPUT: class or dict -> model + schema
         self.action_type: type[ActionBase]
         self.input_schema: dict[str, Any]
@@ -93,17 +91,11 @@ class Tool(Generic[ActionT, ObservationT]):
             self.input_schema = input_schema.to_mcp_schema()
         elif isinstance(input_schema, dict):
             self.input_schema = input_schema
-            self.action_type = ActionBase.from_mcp_schema(
-                f"{to_camel_case(self.name)}Action", input_schema
-            )
+            self.action_type = ActionBase.from_mcp_schema(f"{to_camel_case(self.name)}Action", input_schema)
         else:
-            raise TypeError(
-                "input_schema must be ActionBase subclass or dict JSON schema"
-            )
+            raise TypeError("input_schema must be ActionBase subclass or dict JSON schema")
 
-    def _set_output_schema(
-        self, output_schema: dict[str, Any] | type[ObservationBase] | None
-    ) -> None:
+    def _set_output_schema(self, output_schema: dict[str, Any] | type[ObservationBase] | None) -> None:
         # ---- OUTPUT: optional class or dict -> model + schema
         self.observation_type: type[ObservationBase] | None
         self.output_schema: dict[str, Any] | None
@@ -115,13 +107,9 @@ class Tool(Generic[ActionT, ObservationT]):
             self.output_schema = output_schema.to_mcp_schema()
         elif isinstance(output_schema, dict):
             self.output_schema = output_schema
-            self.observation_type = ObservationBase.from_mcp_schema(
-                f"{to_camel_case(self.name)}Observation", output_schema
-            )
+            self.observation_type = ObservationBase.from_mcp_schema(f"{to_camel_case(self.name)}Observation", output_schema)
         else:
-            raise TypeError(
-                "output_schema must be ObservationBase subclass, dict, or None"
-            )
+            raise TypeError("output_schema must be ObservationBase subclass, dict, or None")
 
     def call(self, action: ActionT) -> ObservationBase:
         """Validate input, execute, and coerce output.
@@ -147,9 +135,7 @@ class Tool(Generic[ActionT, ObservationT]):
                 return ObservationBase.model_validate(result.model_dump())
             elif isinstance(result, dict):
                 return ObservationBase.model_validate(result)
-            raise TypeError(
-                "Output must be dict or BaseModel when no output schema is defined"
-            )
+            raise TypeError("Output must be dict or BaseModel when no output schema is defined")
 
     def to_mcp_tool(self) -> dict[str, Any]:
         out = {

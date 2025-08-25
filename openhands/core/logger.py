@@ -13,12 +13,9 @@ import os
 import litellm
 from logging.handlers import TimedRotatingFileHandler
 
+
 # ========= ENV (loaded at import) =========
-LEVEL_MAP = (
-    logging.getLevelNamesMapping()
-    if hasattr(logging, "getLevelNamesMapping")
-    else logging._nameToLevel
-)
+LEVEL_MAP = logging.getLevelNamesMapping() if hasattr(logging, "getLevelNamesMapping") else logging._nameToLevel
 
 ENV_LOG_LEVEL_STR = os.getenv("LOG_LEVEL", "INFO").upper()
 ENV_LOG_LEVEL = LEVEL_MAP.get(ENV_LOG_LEVEL_STR, logging.INFO)

@@ -143,9 +143,7 @@ class TestTool:
         )
 
         action = MockAction(command="test")
-        with pytest.raises(
-            NotImplementedError, match="Tool 'test_tool' has no executor"
-        ):
+        with pytest.raises(NotImplementedError, match="Tool 'test_tool' has no executor"):
             tool.call(action)
 
     def test_call_with_executor(self):
@@ -174,12 +172,8 @@ class TestTool:
 
         class ComplexAction(ActionBase):
             simple_field: str = Field(description="Simple string field")
-            optional_int: int | None = Field(
-                default=None, description="Optional integer"
-            )
-            string_list: list[str] = Field(
-                default_factory=list, description="List of strings"
-            )
+            optional_int: int | None = Field(default=None, description="Optional integer")
+            string_list: list[str] = Field(default_factory=list, description="List of strings")
 
         tool = Tool(
             name="complex_tool",
@@ -280,9 +274,7 @@ class TestTool:
 
         # Schemas should be equivalent (ignoring order)
         assert original_schema["type"] == tool_schema["type"]
-        assert set(original_schema["properties"].keys()) == set(
-            tool_schema["properties"].keys()
-        )
+        assert set(original_schema["properties"].keys()) == set(tool_schema["properties"].keys())
 
     def test_tool_with_no_observation_type(self):
         """Test tool creation with None observation type."""
@@ -348,9 +340,7 @@ class TestTool:
         """Test executor with complex return types."""
 
         class ComplexObservation(ObservationBase):
-            data: Dict[str, Any] = Field(
-                default_factory=dict, description="Complex data"
-            )
+            data: Dict[str, Any] = Field(default_factory=dict, description="Complex data")
             count: int = Field(default=0, description="Count field")
 
         class MockComplexExecutor(ToolExecutor):
@@ -445,9 +435,7 @@ class TestTool:
 
         class RequiredFieldAction(ActionBase):
             required_field: str = Field(description="This field is required")
-            optional_field: Optional[str] = Field(
-                default=None, description="This field is optional"
-            )
+            optional_field: Optional[str] = Field(default=None, description="This field is optional")
 
         tool = Tool(
             name="required_tool",
@@ -543,9 +531,7 @@ class TestTool:
         assert view_range_schema["items"]["type"] == "integer"
 
         assert "description" in view_range_schema
-        assert (
-            "Optional parameter of `view` command" in view_range_schema["description"]
-        )
+        assert "Optional parameter of `view` command" in view_range_schema["description"]
 
         command_schema = str_editor_props["command"]
         assert "enum" in command_schema
@@ -593,21 +579,11 @@ class TestTool:
             """Action with complex nested types for testing."""
 
             simple_string: str = Field(description="Simple string field")
-            optional_int: Optional[int] = Field(
-                default=None, description="Optional integer"
-            )
-            string_array: List[str] = Field(
-                default_factory=list, description="Array of strings"
-            )
-            int_array: List[int] = Field(
-                default_factory=list, description="Array of integers"
-            )
-            nested_dict: Dict[str, Any] = Field(
-                default_factory=dict, description="Nested dictionary"
-            )
-            optional_array: Optional[List[str]] = Field(
-                default=None, description="Optional array"
-            )
+            optional_int: Optional[int] = Field(default=None, description="Optional integer")
+            string_array: List[str] = Field(default_factory=list, description="Array of strings")
+            int_array: List[int] = Field(default_factory=list, description="Array of integers")
+            nested_dict: Dict[str, Any] = Field(default_factory=dict, description="Nested dictionary")
+            optional_array: Optional[List[str]] = Field(default=None, description="Optional array")
 
         tool = Tool(
             name="complex_nested_tool",

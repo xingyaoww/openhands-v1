@@ -1,14 +1,14 @@
 import json
 
 from openhands.core.runtime.tools.execute_bash.constants import (
+    CMD_OUTPUT_METADATA_PS1_REGEX,
     CMD_OUTPUT_PS1_BEGIN,
     CMD_OUTPUT_PS1_END,
-    CMD_OUTPUT_METADATA_PS1_REGEX,
 )
-from openhands.core.runtime.tools.execute_bash.metadata import CmdOutputMetadata
 from openhands.core.runtime.tools.execute_bash.definition import (
     ExecuteBashObservation,
 )
+from openhands.core.runtime.tools.execute_bash.metadata import CmdOutputMetadata
 
 
 def test_ps1_metadata_format():
@@ -109,10 +109,7 @@ def test_ps1_metadata_parsing_string_real_example():
     assert metadata.username == "runner"
     assert metadata.hostname == "fv-az1055-610"
     assert metadata.working_dir == "/home/runner/work/OpenHands/OpenHands"
-    assert (
-        metadata.py_interpreter_path
-        == "/home/runner/.cache/pypoetry/virtualenvs/openhands-ai-ULPBlkAi-py3.12/bin/python"
-    )
+    assert metadata.py_interpreter_path == "/home/runner/.cache/pypoetry/virtualenvs/openhands-ai-ULPBlkAi-py3.12/bin/python"
 
 
 def test_ps1_metadata_parsing_additional_prefix():
@@ -271,9 +268,7 @@ def test_cmd_output_observation_properties():
     """Test ExecuteBashObservation class properties"""
     # Test with successful command
     metadata = CmdOutputMetadata(exit_code=0, pid=123)
-    obs = ExecuteBashObservation(
-        command="ls", output="file1\nfile2", exit_code=0, metadata=metadata
-    )
+    obs = ExecuteBashObservation(command="ls", output="file1\nfile2", exit_code=0, metadata=metadata)
     assert obs.command_id == 123
     assert obs.exit_code == 0
     assert not obs.error
@@ -284,9 +279,7 @@ def test_cmd_output_observation_properties():
 
     # Test with failed command
     metadata = CmdOutputMetadata(exit_code=1, pid=456)
-    obs = ExecuteBashObservation(
-        command="invalid", output="error", exit_code=1, error=True, metadata=metadata
-    )
+    obs = ExecuteBashObservation(command="invalid", output="error", exit_code=1, error=True, metadata=metadata)
     assert obs.command_id == 456
     assert obs.exit_code == 1
     assert obs.error

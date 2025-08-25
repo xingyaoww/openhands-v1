@@ -4,9 +4,10 @@ from typing import Literal
 
 from pydantic import Field
 
-from openhands.core.runtime.tool import Tool, ToolAnnotations
 from openhands.core.runtime.schema import ActionBase, ObservationBase
 from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
+from openhands.core.runtime.tool import Tool, ToolAnnotations
+
 
 CommandLiteral = Literal["view", "create", "str_replace", "insert", "undo_edit"]
 
@@ -14,12 +15,8 @@ CommandLiteral = Literal["view", "create", "str_replace", "insert", "undo_edit"]
 class StrReplaceEditorAction(ActionBase):
     """Schema for string replace editor operations."""
 
-    command: CommandLiteral = Field(
-        description="The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`."
-    )
-    path: str = Field(
-        description="Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`."
-    )
+    command: CommandLiteral = Field(description="The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.")
+    path: str = Field(description="Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`.")
     file_text: str | None = Field(
         default=None,
         description="Required parameter of `create` command, with the content of the file to be created.",
@@ -30,15 +27,15 @@ class StrReplaceEditorAction(ActionBase):
     )
     new_str: str | None = Field(
         default=None,
-        description="Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert.",
+        description=("Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert."),
     )
     insert_line: int | None = Field(
         default=None,
-        description="Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`.",
+        description=("Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`."),
     )
     view_range: list[int] | None = Field(
         default=None,
-        description="Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.",
+        description=("Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file."),
     )
     security_risk: SECURITY_RISK_LITERAL = Field(description=SECURITY_RISK_DESC)
 
@@ -46,20 +43,14 @@ class StrReplaceEditorAction(ActionBase):
 class StrReplaceEditorObservation(ObservationBase):
     """A ToolResult that can be rendered as a CLI output."""
 
-    output: str = Field(
-        default="", description="The output message from the tool for the LLM to see."
-    )
+    output: str = Field(default="", description="The output message from the tool for the LLM to see.")
     path: str | None = Field(default=None, description="The file path that was edited.")
     prev_exist: bool = Field(
         default=True,
         description="Indicates if the file previously existed. If not, it was created.",
     )
-    old_content: str | None = Field(
-        default=None, description="The content of the file before the edit."
-    )
-    new_content: str | None = Field(
-        default=None, description="The content of the file after the edit."
-    )
+    old_content: str | None = Field(default=None, description="The content of the file before the edit.")
+    new_content: str | None = Field(default=None, description="The content of the file after the edit.")
     error: str | None = Field(default=None, description="Error message if any.")
 
     @property
@@ -80,8 +71,10 @@ Command = Literal[
 
 TOOL_DESCRIPTION = """Custom editing tool for viewing, creating and editing files in plain-text format
 * State is persistent across command calls and discussions with the user
-* If `path` is a text file, `view` displays the result of applying `cat -n`. If `path` is a directory, `view` lists non-hidden files and directories up to 2 levels deep
-* The following binary file extensions can be viewed in Markdown format: [".xlsx", ".pptx", ".wav", ".mp3", ".m4a", ".flac", ".pdf", ".docx"]. IT DOES NOT HANDLE IMAGES.
+* If `path` is a text file, `view` displays the result of applying `cat -n`. If `path` is a directory, `view` lists 
+  non-hidden files and directories up to 2 levels deep
+* The following binary file extensions can be viewed in Markdown format: [".xlsx", ".pptx", ".wav", ".mp3", ".m4a", 
+  ".flac", ".pdf", ".docx"]. IT DOES NOT HANDLE IMAGES.
 * The `create` command cannot be used if the specified `path` already exists as a file
 * If a `command` generates a long output, it will be truncated and marked with `<response clipped>`
 * The `undo_edit` command will revert the last edit made to the file at `path`
@@ -100,7 +93,8 @@ When making edits:
 
 CRITICAL REQUIREMENTS FOR USING THIS TOOL:
 
-1. EXACT MATCHING: The `old_str` parameter must match EXACTLY one or more consecutive lines from the file, including all whitespace and indentation. The tool will fail if `old_str` matches multiple locations or doesn't match exactly with the file content.
+1. EXACT MATCHING: The `old_str` parameter must match EXACTLY one or more consecutive lines from the file, including all 
+   whitespace and indentation. The tool will fail if `old_str` matches multiple locations or doesn't match exactly with the file content.
 
 2. UNIQUENESS: The `old_str` must uniquely identify a single instance in the file:
    - Include sufficient context before and after the change point (3-5 lines recommended)
@@ -108,7 +102,8 @@ CRITICAL REQUIREMENTS FOR USING THIS TOOL:
 
 3. REPLACEMENT: The `new_str` parameter should contain the edited lines that replace the `old_str`. Both strings must be different.
 
-Remember: when making multiple file edits in a row to the same file, you should prefer to send all edits in a single message with multiple calls to this tool, rather than multiple messages with a single call each.
+Remember: when making multiple file edits in a row to the same file, you should prefer to send all edits in a single 
+message with multiple calls to this tool, rather than multiple messages with a single call each.
 """
 
 

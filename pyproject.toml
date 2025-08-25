@@ -33,6 +33,7 @@ build-backend = "setuptools.build_meta"
 # Ruff configuration
 [tool.ruff]
 target-version = "py312"
+line-length = 500
 
 [tool.ruff.format]
 quote-style = "double"
