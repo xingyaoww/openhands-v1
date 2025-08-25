@@ -4,7 +4,8 @@ from .microagent import (
     RepoMicroagent,
     load_microagents_from_dir,
 )
-from .types import MicroagentMetadata, MicroagentType, MicroagentKnowledge
+from .types import MicroagentKnowledge, MicroagentMetadata, MicroagentType
+
 
 __all__ = [
     "BaseMicroagent",

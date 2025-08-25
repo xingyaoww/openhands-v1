@@ -1,21 +1,23 @@
-import os
 import json
+import os
 from typing import Callable
 
-from openhands.core.logger import get_logger
-from openhands.core.context.prompt import PromptManager
-from openhands.core.context.env_context import EnvContext
-from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
-from openhands.core.runtime import Tool, ObservationBase, ActionBase
-from openhands.core.runtime.tools import finish_tool, FinishAction
-from openhands.core.agenthub.agent import AgentBase
-from openhands.core.agenthub.history import AgentHistory
 from litellm.types.utils import (
     ChatCompletionMessageToolCall,
+    Choices,
     Message as LiteLLMMessage,
     ModelResponse,
-    Choices,
 )
+
+from openhands.core.agenthub.agent import AgentBase
+from openhands.core.agenthub.history import AgentHistory
+from openhands.core.context.env_context import EnvContext
+from openhands.core.context.prompt import PromptManager
+from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
+from openhands.core.logger import get_logger
+from openhands.core.runtime import ActionBase, ObservationBase, Tool
+from openhands.core.runtime.tools import FinishAction, finish_tool
+
 
 logger = get_logger(__name__)
 
@@ -34,9 +36,7 @@ class CodeActAgent(AgentBase):
             prompt_dir=os.path.join(os.path.dirname(__file__), "prompts"),
             system_prompt_filename=system_prompt_filename,
         )
-        self.system_message: TextContent = self.prompt_manager.get_system_message(
-            cli_mode=cli_mode
-        )
+        self.system_message: TextContent = self.prompt_manager.get_system_message(cli_mode=cli_mode)
         self.history: AgentHistory = AgentHistory()
         self.max_iterations: int = 10
 
@@ -47,8 +47,7 @@ class CodeActAgent(AgentBase):
     def run(
         self,
         user_input: Message,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None]
-        | None = None,
+        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
     ) -> None:
         assert user_input.role == "user", "Input message must have role 'user'"
 
@@ -59,9 +58,7 @@ class CodeActAgent(AgentBase):
                 on_event(sys_msg)
             content = user_input.content
             if self.env_context:
-                initial_env_context: list[TextContent] = self.env_context.render(
-                    self.prompt_manager
-                )
+                initial_env_context: list[TextContent] = self.env_context.render(self.prompt_manager)
                 content += initial_env_context
             user_msg = Message(role="user", content=content)
             self.history.messages.append(user_msg)
@@ -70,9 +67,7 @@ class CodeActAgent(AgentBase):
 
             if self.env_context and self.env_context.activated_microagents:
                 for microagent in self.env_context.activated_microagents:
-                    self.history.microagent_activations.append(
-                        (microagent.name, len(self.history.messages) - 1)
-                    )
+                    self.history.microagent_activations.append((microagent.name, len(self.history.messages) - 1))
 
         else:
             self.history.messages.append(user_input)
@@ -85,15 +80,9 @@ class CodeActAgent(AgentBase):
             response: ModelResponse = self.llm.completion(
                 messages=self.llm.format_messages_for_llm(self.history.messages),
                 tools=[tool.to_openai_tool() for tool in self.tools],
-                extra_body={
-                    "metadata": get_llm_metadata(
-                        model_name=self.llm.config.model, agent_name=self.name
-                    )
-                },
+                extra_body={"metadata": get_llm_metadata(model_name=self.llm.config.model, agent_name=self.name)},
             )
-            assert len(response.choices) == 1 and isinstance(
-                response.choices[0], Choices
-            )
+            assert len(response.choices) == 1 and isinstance(response.choices[0], Choices)
             llm_message: LiteLLMMessage = response.choices[0].message  # type: ignore
             message = Message.from_litellm_message(llm_message)
             self.history.messages.append(message)
@@ -107,9 +96,7 @@ class CodeActAgent(AgentBase):
 
                 if tool_call.function.name == finish_tool.name:
                     try:
-                        action = FinishAction.model_validate(
-                            json.loads(tool_call.function.arguments)
-                        )
+                        action = FinishAction.model_validate(json.loads(tool_call.function.arguments))
                         if on_event:
                             on_event(action)
                     finally:
@@ -126,8 +113,7 @@ class CodeActAgent(AgentBase):
     def _execute_tool_call(
         self,
         tool_call: ChatCompletionMessageToolCall,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None]
-        | None = None,
+        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
     ) -> Message:
         tool_name = tool_call.function.name
         assert tool_name is not None, "Tool call must have a name"
@@ -135,9 +121,7 @@ class CodeActAgent(AgentBase):
         if tool is None:
             raise ValueError(f"Tool '{tool_name}' called by LLM is not found")
 
-        action: ActionBase = tool.action_type.model_validate(
-            json.loads(tool_call.function.arguments)
-        )
+        action: ActionBase = tool.action_type.model_validate(json.loads(tool_call.function.arguments))
         if on_event:
             on_event(action)
         if tool.executor is None:

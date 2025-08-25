@@ -1,10 +1,11 @@
 from typing import Callable
 
-from openhands.core.llm import LLM
-from openhands.core.runtime import Tool, ActionBase, ObservationBase
 from openhands.core.context.env_context import EnvContext
+from openhands.core.llm import LLM
 from openhands.core.llm.message import Message
 from openhands.core.logger import get_logger
+from openhands.core.runtime import ActionBase, ObservationBase, Tool
+
 
 logger = get_logger(__name__)
 
@@ -58,8 +59,7 @@ class AgentBase:
     def run(
         self,
         user_input: Message,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None]
-        | None = None,
+        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
     ) -> None:
         """Runs the Agent with the given input and returns the output.
 

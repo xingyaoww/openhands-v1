@@ -14,10 +14,12 @@ from pydantic import (
     model_validator,
 )
 
+
 if TYPE_CHECKING:
     pass
 
 from openhands.core.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -87,9 +89,7 @@ class MCPStdioServerConfig(BaseModel):
 
         # Check for valid characters (alphanumeric, hyphens, underscores)
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError(
-                "Server name can only contain letters, numbers, hyphens, and underscores"
-            )
+            raise ValueError("Server name can only contain letters, numbers, hyphens, and underscores")
 
         return v
 
@@ -104,9 +104,7 @@ class MCPStdioServerConfig(BaseModel):
 
         # Check that command doesn't contain spaces (should be a single executable)
         if " " in v:
-            raise ValueError(
-                "Command should be a single executable without spaces (use arguments field for parameters)"
-            )
+            raise ValueError("Command should be a single executable without spaces (use arguments field for parameters)")
 
         return v
 
@@ -133,9 +131,7 @@ class MCPStdioServerConfig(BaseModel):
                 return shlex.split(v)
             except ValueError as e:
                 # If shlex parsing fails (e.g., unmatched quotes), provide clear error
-                raise ValueError(
-                    f'Invalid argument format: {str(e)}. Use shell-like format, e.g., "arg1 arg2" or \'--config "value with spaces"\''
-                )
+                raise ValueError(f'Invalid argument format: {str(e)}. Use shell-like format, e.g., "arg1 arg2" or \'--config "value with spaces"\'')
 
         return v or []
 
@@ -154,18 +150,14 @@ class MCPStdioServerConfig(BaseModel):
                     continue
 
                 if "=" not in pair:
-                    raise ValueError(
-                        f"Environment variable '{pair}' must be in KEY=VALUE format"
-                    )
+                    raise ValueError(f"Environment variable '{pair}' must be in KEY=VALUE format")
 
                 key, value = pair.split("=", 1)
                 key = key.strip()
                 if not key:
                     raise ValueError("Environment variable key cannot be empty")
                 if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", key):
-                    raise ValueError(
-                        f"Invalid environment variable name '{key}'. Must start with letter or underscore, contain only alphanumeric characters and underscores"
-                    )
+                    raise ValueError(f"Invalid environment variable name '{key}'. Must start with letter or underscore, contain only alphanumeric characters and underscores")
 
                 env[key] = value
             return env
@@ -180,12 +172,7 @@ class MCPStdioServerConfig(BaseModel):
         """
         if not isinstance(other, MCPStdioServerConfig):
             return False
-        return (
-            self.name == other.name
-            and self.command == other.command
-            and self.args == other.args
-            and set(self.env.items()) == set(other.env.items())
-        )
+        return self.name == other.name and self.command == other.command and self.args == other.args and set(self.env.items()) == set(other.env.items())
 
 
 class MCPSHTTPServerConfig(BaseModel):
@@ -269,9 +256,7 @@ class MCPConfig(BaseModel):
             # Convert all entries in sse_servers to MCPSSEServerConfig objects
             if "sse_servers" in data:
                 data["sse_servers"] = cls._normalize_servers(data["sse_servers"])
-                servers: list[
-                    MCPSSEServerConfig | MCPStdioServerConfig | MCPSHTTPServerConfig
-                ] = []
+                servers: list[MCPSSEServerConfig | MCPStdioServerConfig | MCPSHTTPServerConfig] = []
                 for server in data["sse_servers"]:
                     servers.append(MCPSSEServerConfig(**server))
                 data["sse_servers"] = servers

@@ -1,8 +1,8 @@
 from .env_context import (
+    ConversationInstructions,
     EnvContext,
     RepositoryInfo,
     RuntimeInfo,
-    ConversationInstructions,
 )
 from .message_context import MessageContext
 from .prompt import PromptManager

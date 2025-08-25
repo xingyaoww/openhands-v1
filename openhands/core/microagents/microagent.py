@@ -7,10 +7,11 @@ from typing import Any, Union
 import frontmatter
 from pydantic import BaseModel
 
+from openhands.core.logger import get_logger
 
 from .exceptions import MicroagentValidationError
 from .types import InputMetadata, MicroagentMetadata, MicroagentType
-from openhands.core.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -89,21 +90,14 @@ class BaseMicroagent(BaseModel):
             # Validate MCP tools configuration if present
             if metadata.mcp_tools:
                 if metadata.mcp_tools.sse_servers:
-                    logger.warning(
-                        f"Microagent {metadata.name} has SSE servers. Only stdio servers are currently supported."
-                    )
+                    logger.warning(f"Microagent {metadata.name} has SSE servers. Only stdio servers are currently supported.")
 
                 if not metadata.mcp_tools.stdio_servers:
-                    raise MicroagentValidationError(
-                        f"Microagent {metadata.name} has MCP tools configuration but no stdio servers. "
-                        "Only stdio servers are currently supported."
-                    )
+                    raise MicroagentValidationError(f"Microagent {metadata.name} has MCP tools configuration but no stdio servers. Only stdio servers are currently supported.")
         except Exception as e:
             # Provide more detailed error message for validation errors
             error_msg = f"Error validating microagent metadata in {path.name}: {str(e)}"
-            if "type" in metadata_dict and metadata_dict["type"] not in [
-                t.value for t in MicroagentType
-            ]:
+            if "type" in metadata_dict and metadata_dict["type"] not in [t.value for t in MicroagentType]:
                 valid_types = ", ".join([f'"{t.value}"' for t in MicroagentType])
                 error_msg += f'. Invalid "type" value: "{metadata_dict["type"]}". Valid types are: {valid_types}'
             raise MicroagentValidationError(error_msg) from e
@@ -200,9 +194,7 @@ class RepoMicroagent(BaseMicroagent):
     def __init__(self, **data):
         super().__init__(**data)
         if self.type != MicroagentType.REPO_KNOWLEDGE:
-            raise ValueError(
-                f"RepoMicroagent initialized with incorrect type: {self.type}"
-            )
+            raise ValueError(f"RepoMicroagent initialized with incorrect type: {self.type}")
 
 
 class TaskMicroagent(KnowledgeMicroagent):
@@ -215,9 +207,7 @@ class TaskMicroagent(KnowledgeMicroagent):
     def __init__(self, **data):
         super().__init__(**data)
         if self.type != MicroagentType.TASK:
-            raise ValueError(
-                f"TaskMicroagent initialized with incorrect type: {self.type}"
-            )
+            raise ValueError(f"TaskMicroagent initialized with incorrect type: {self.type}")
 
         # Append a prompt to ask for missing variables
         self._append_missing_variables_prompt()
@@ -303,8 +293,5 @@ def load_microagents_from_dir(
                 error_msg = f"Error loading microagent from {file}: {str(e)}"
                 raise ValueError(error_msg) from e
 
-    logger.debug(
-        f"Loaded {len(repo_agents) + len(knowledge_agents)} microagents: "
-        f"{[*repo_agents.keys(), *knowledge_agents.keys()]}"
-    )
+    logger.debug(f"Loaded {len(repo_agents) + len(knowledge_agents)} microagents: {[*repo_agents.keys(), *knowledge_agents.keys()]}")
     return repo_agents, knowledge_agents

@@ -1,14 +1,17 @@
 import os
 import re
 import sys
+
 from jinja2 import Environment, FileSystemLoader, Template
+
+from openhands.core.llm.message import TextContent
+from openhands.core.microagents import MicroagentKnowledge
+
 from .env_context import (
+    ConversationInstructions,
     RepositoryInfo,
     RuntimeInfo,
-    ConversationInstructions,
 )
-from openhands.core.microagents import MicroagentKnowledge
-from openhands.core.llm.message import TextContent
 
 
 def refine_prompt(prompt: str):
@@ -26,13 +29,9 @@ def refine_prompt(prompt: str):
     if sys.platform == "win32":
         # Replace 'bash' with 'powershell' including tool names like 'execute_bash'
         # First replace 'execute_bash' with 'execute_powershell' to handle tool names
-        result = re.sub(
-            r"\bexecute_bash\b", "execute_powershell", prompt, flags=re.IGNORECASE
-        )
+        result = re.sub(r"\bexecute_bash\b", "execute_powershell", prompt, flags=re.IGNORECASE)
         # Then replace standalone 'bash' with 'powershell'
-        result = re.sub(
-            r"(?<!execute_)(?<!_)\bbash\b", "powershell", result, flags=re.IGNORECASE
-        )
+        result = re.sub(r"(?<!execute_)(?<!_)\bbash\b", "powershell", result, flags=re.IGNORECASE)
         return result
     return prompt
 
@@ -58,12 +57,8 @@ class PromptManager:
         self.env = Environment(loader=FileSystemLoader(prompt_dir))
         self.system_template: Template = self._load_template(system_prompt_filename)
         self.user_template: Template = self._load_template("user_prompt.j2")
-        self.additional_info_template: Template = self._load_template(
-            "additional_info.j2"
-        )
-        self.microagent_info_template: Template = self._load_template(
-            "microagent_info.j2"
-        )
+        self.additional_info_template: Template = self._load_template("additional_info.j2")
+        self.microagent_info_template: Template = self._load_template("microagent_info.j2")
 
     def _load_template(self, template_name: str) -> Template:
         """Load a template from the prompt directory.
@@ -112,6 +107,4 @@ class PromptManager:
             triggered_agents: A list of MicroagentKnowledge objects containing information
                               about triggered microagents.
         """
-        return self.microagent_info_template.render(
-            triggered_agents=triggered_agents
-        ).strip()
+        return self.microagent_info_template.render(triggered_agents=triggered_agents).strip()

@@ -1,6 +1,7 @@
 """OpenHands runtime package."""
 
-from .tool import Tool, ToolAnnotations, ActionBase, ObservationBase
+from .tool import ActionBase, ObservationBase, Tool, ToolAnnotations
+
 
 __all__ = [
     "Tool",

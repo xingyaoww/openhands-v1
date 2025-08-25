@@ -4,9 +4,10 @@ from typing import Literal
 
 from pydantic import Field
 
-from openhands.core.runtime.tool import Tool, ToolAnnotations
 from openhands.core.runtime.schema import ActionBase, ObservationBase
 from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
+from openhands.core.runtime.tool import Tool, ToolAnnotations
+
 
 CommandLiteral = Literal["view", "create", "str_replace", "insert", "undo_edit"]
 
@@ -14,12 +15,8 @@ CommandLiteral = Literal["view", "create", "str_replace", "insert", "undo_edit"]
 class StrReplaceEditorAction(ActionBase):
     """Schema for string replace editor operations."""
 
-    command: CommandLiteral = Field(
-        description="The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`."
-    )
-    path: str = Field(
-        description="Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`."
-    )
+    command: CommandLiteral = Field(description="The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.")
+    path: str = Field(description="Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`.")
     file_text: str | None = Field(
         default=None,
         description="Required parameter of `create` command, with the content of the file to be created.",
@@ -46,20 +43,14 @@ class StrReplaceEditorAction(ActionBase):
 class StrReplaceEditorObservation(ObservationBase):
     """A ToolResult that can be rendered as a CLI output."""
 
-    output: str = Field(
-        default="", description="The output message from the tool for the LLM to see."
-    )
+    output: str = Field(default="", description="The output message from the tool for the LLM to see.")
     path: str | None = Field(default=None, description="The file path that was edited.")
     prev_exist: bool = Field(
         default=True,
         description="Indicates if the file previously existed. If not, it was created.",
     )
-    old_content: str | None = Field(
-        default=None, description="The content of the file before the edit."
-    )
-    new_content: str | None = Field(
-        default=None, description="The content of the file after the edit."
-    )
+    old_content: str | None = Field(default=None, description="The content of the file before the edit.")
+    new_content: str | None = Field(default=None, description="The content of the file after the edit.")
     error: str | None = Field(default=None, description="Error message if any.")
 
     @property

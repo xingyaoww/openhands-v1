@@ -1,5 +1,6 @@
-import openhands
 import os
+
+import openhands
 
 
 def get_llm_metadata(

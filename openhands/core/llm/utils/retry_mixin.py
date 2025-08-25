@@ -1,13 +1,16 @@
 from typing import Any, Callable, Iterable, cast
+
 from tenacity import (
+    RetryCallState,
     retry,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    RetryCallState,
 )
+
 from openhands.core.llm.exceptions import LLMNoResponseError
 from openhands.core.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -52,9 +55,7 @@ class RetryMixin:
                     current_temp = kwargs.get("temperature", 0)
                     if current_temp == 0:
                         kwargs["temperature"] = 1.0
-                        logger.warning(
-                            "LLMNoResponseError detected with temperature=0, setting temperature to 1.0 for next attempt."
-                        )
+                        logger.warning("LLMNoResponseError detected with temperature=0, setting temperature to 1.0 for next attempt.")
                     else:
                         logger.warning(
                             "LLMNoResponseError detected with temperature=%s, keeping original temperature",
@@ -78,9 +79,7 @@ class RetryMixin:
         """Log retry attempts."""
 
         if retry_state.outcome is None:
-            logger.error(
-                "retry_state.outcome is None. This should not happen, please check the retry logic."
-            )
+            logger.error("retry_state.outcome is None. This should not happen, please check the retry logic.")
             return
 
         exc = retry_state.outcome.exception()

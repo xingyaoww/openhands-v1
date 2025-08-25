@@ -80,9 +80,7 @@ class ConversationVisualizer:
         except (json.JSONDecodeError, AttributeError):
             args_text = f"  arguments: {tool_call.function.arguments}"
 
-        content = (
-            f"🔧 [bold blue]{tool_call.function.name}[/bold blue]\n{args_text.rstrip()}"
-        )
+        content = f"🔧 [bold blue]{tool_call.function.name}[/bold blue]\n{args_text.rstrip()}"
 
         panel = Panel(
             content,
@@ -105,9 +103,7 @@ class ConversationVisualizer:
         content = observation.agent_observation
 
         # Color code based on success/failure
-        border_style = (
-            "red" if ("error" in obs_data and obs_data["error"]) else "yellow"
-        )
+        border_style = "red" if ("error" in obs_data and obs_data["error"]) else "yellow"
 
         panel = Panel(
             content,
