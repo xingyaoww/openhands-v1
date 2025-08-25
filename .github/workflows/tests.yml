@@ -2,8 +2,6 @@ name: Run tests
 on:
   pull_request:
     branches: ["**"]
-  pull_request:
-    branches: ["**"]
 
 permissions:
   contents: write
