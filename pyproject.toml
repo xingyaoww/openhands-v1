@@ -26,3 +26,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.12.10",
 ]
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"

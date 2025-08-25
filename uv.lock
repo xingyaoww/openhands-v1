@@ -1103,7 +1103,7 @@ wheels = [
 [[package]]
 name = "openhands-ai"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "bashlex" },
     { name = "binaryornot" },
