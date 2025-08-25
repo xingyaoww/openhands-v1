@@ -79,7 +79,7 @@ class EnvContext(BaseModel):
         description="List of microagents that have been activated based on the user's input",
     )
 
-    def render(self, prompt_manager: PromptManager) -> list[TextContent]:
+    def render(self, prompt_manager: "PromptManager") -> list[TextContent]:
         """Renders the environment context into a string using the provided PromptManager."""
         message_content = []
         # Build the workspace context information
