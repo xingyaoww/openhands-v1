@@ -164,4 +164,3 @@ class Tool(Generic[ActionT, ObservationT]):
                 strict=False,
             ),
         )
-
