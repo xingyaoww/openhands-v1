@@ -71,15 +71,11 @@ class ConversationVisualizer:
         try:
             args = json.loads(tool_call.function.arguments)
             args_text = ""
-
-            # Show only the most important arguments
-            key_args = ["command", "path", "message", "query"]
-            for key in key_args:
-                if key in args and args[key]:
-                    value = str(args[key])
-                    if len(value) > 100:
-                        value = value[:97] + "..."
-                    args_text += f"  {key}: {value}\n"
+            for key, value in args.items():
+                value = str(value)
+                if len(value) > 100:
+                    value = value[:97] + "..."
+                args_text += f"  {key}: {value}\n"
 
         except (json.JSONDecodeError, AttributeError):
             args_text = f"  arguments: {tool_call.function.arguments}"
