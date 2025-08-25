@@ -2,6 +2,7 @@ from .agenthub import AgentBase, CodeActAgent
 from .llm import LLM, Message
 from .runtime import Tool, ActionBase, ObservationBase
 from .config import OpenHandsConfig, LLMConfig, MCPConfig
+from .logger import get_logger
 
 __all__ = [
     "LLM",
@@ -14,4 +15,5 @@ __all__ = [
     "OpenHandsConfig",
     "LLMConfig",
     "MCPConfig",
+    "get_logger",
 ]
