@@ -33,7 +33,15 @@ ENV_FORMAT = os.getenv(
 ENV_AUTO_CONFIG = os.getenv("LOG_AUTO_CONFIG", "true").lower() in {"1", "true", "yes"}
 ENV_DEBUG_LLM = os.getenv("DEBUG_LLM", "False").lower() in ["true", "1", "yes"]
 
+
+def _configure_litellm_logger(level: int) -> None:
+    """Force LiteLLM library loggers to a specific level regardless of root level."""
+    for name in ("LiteLLM", "litellm"):
+        logging.getLogger(name).setLevel(level)
+
+
 # Configure litellm logging based on DEBUG_LLM
+_ENABLE_LITELLM_DEBUG = False
 if ENV_DEBUG_LLM:
     confirmation = input(
         "\n⚠️ WARNING: You are enabling DEBUG_LLM which may expose sensitive information like API keys.\n"
@@ -41,6 +49,7 @@ if ENV_DEBUG_LLM:
         "Type 'y' to confirm you understand the risks: "
     )
     if confirmation.lower() == "y":
+        _ENABLE_LITELLM_DEBUG = True
         litellm.suppress_debug_info = False
         litellm.set_verbose = True  # type: ignore
     else:
@@ -50,6 +59,9 @@ if ENV_DEBUG_LLM:
 else:
     litellm.suppress_debug_info = True
     litellm.set_verbose = False  # type: ignore
+
+# By default, suppress LiteLLM INFO/DEBUG logs regardless of root logger level
+_configure_litellm_logger(logging.DEBUG if _ENABLE_LITELLM_DEBUG else logging.WARNING)
 
 
 # ========= SETUP =========
