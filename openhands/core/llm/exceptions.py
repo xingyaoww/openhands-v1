@@ -26,9 +26,7 @@ class LLMNoActionError(LLMError):
 class LLMResponseError(LLMError):
     """Exception raised when the LLM response does not include an action or the action is not of the expected type."""
 
-    def __init__(
-        self, message: str = "Failed to retrieve action from LLM response"
-    ) -> None:
+    def __init__(self, message: str = "Failed to retrieve action from LLM response") -> None:
         super().__init__(message)
 
 

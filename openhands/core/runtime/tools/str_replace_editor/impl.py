@@ -1,11 +1,12 @@
-from .editor import FileEditor
+from ...tool import ToolExecutor
 from .definition import (
     CommandLiteral,
-    StrReplaceEditorObservation,
     StrReplaceEditorAction,
+    StrReplaceEditorObservation,
 )
+from .editor import FileEditor
 from .exceptions import ToolError
-from ...tool import ToolExecutor
+
 
 # Module-global editor instance (lazily initialized in file_editor)
 _GLOBAL_EDITOR: FileEditor | None = None

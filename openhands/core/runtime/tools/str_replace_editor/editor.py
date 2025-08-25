@@ -7,24 +7,23 @@ from typing import get_args
 
 from binaryornot.check import is_binary
 
-
-from .utils.shell import run_shell_cmd
-from .utils.encoding import EncodingManager, with_encoding
-from .utils.history import FileHistoryManager
-from .utils.config import SNIPPET_CONTEXT_WINDOW
-from .utils.truncate import maybe_truncate
+from .definition import CommandLiteral, StrReplaceEditorObservation
 from .exceptions import (
     EditorToolParameterInvalidError,
     EditorToolParameterMissingError,
     FileValidationError,
     ToolError,
 )
+from .utils.config import SNIPPET_CONTEXT_WINDOW
+from .utils.encoding import EncodingManager, with_encoding
+from .utils.history import FileHistoryManager
 from .utils.prompts import (
     BINARY_FILE_CONTENT_TRUNCATED_NOTICE,
     DIRECTORY_CONTENT_TRUNCATED_NOTICE,
     TEXT_FILE_CONTENT_TRUNCATED_NOTICE,
 )
-from .definition import StrReplaceEditorObservation, CommandLiteral
+from .utils.shell import run_shell_cmd
+from .utils.truncate import maybe_truncate
 
 
 class FileEditor:
@@ -55,9 +54,7 @@ class FileEditor:
                            provided for relative paths.
         """
         self._history_manager = FileHistoryManager(max_history_per_file=10)
-        self._max_file_size = (
-            (max_file_size_mb or self.MAX_FILE_SIZE_MB) * 1024 * 1024
-        )  # Convert to bytes
+        self._max_file_size = (max_file_size_mb or self.MAX_FILE_SIZE_MB) * 1024 * 1024  # Convert to bytes
 
         # Initialize encoding manager
         self._encoding_manager = EncodingManager()
@@ -67,9 +64,7 @@ class FileEditor:
             workspace_path = Path(workspace_root)
             # Ensure workspace_root is an absolute path
             if not workspace_path.is_absolute():
-                raise ValueError(
-                    f"workspace_root must be an absolute path, got: {workspace_root}"
-                )
+                raise ValueError(f"workspace_root must be an absolute path, got: {workspace_root}")
             self._cwd = workspace_path
         else:
             self._cwd = None  # type: ignore
@@ -120,9 +115,7 @@ class FileEditor:
         elif command == "undo_edit":
             return self.undo_edit(_path)
 
-        raise ToolError(
-            f"Unrecognized command {command}. The allowed commands for {self.__class__.__name__} tool are: {', '.join(get_args(CommandLiteral))}"
-        )
+        raise ToolError(f"Unrecognized command {command}. The allowed commands for {self.__class__.__name__} tool are: {', '.join(get_args(CommandLiteral))}")
 
     @with_encoding
     def _count_lines(self, path: Path, encoding: str = "utf-8") -> int:
@@ -189,22 +182,16 @@ class FileEditor:
                 for match in re.finditer(pattern, file_content)
             ]
             if not occurrences:
-                raise ToolError(
-                    f"No replacement was performed, old_str `{old_str}` did not appear verbatim in {path}."
-                )
+                raise ToolError(f"No replacement was performed, old_str `{old_str}` did not appear verbatim in {path}.")
         if len(occurrences) > 1:
             line_numbers = sorted(set(line for line, _, _ in occurrences))
-            raise ToolError(
-                f"No replacement was performed. Multiple occurrences of old_str `{old_str}` in lines {line_numbers}. Please ensure it is unique."
-            )
+            raise ToolError(f"No replacement was performed. Multiple occurrences of old_str `{old_str}` in lines {line_numbers}. Please ensure it is unique.")
 
         # We found exactly one occurrence
         replacement_line, matched_text, idx = occurrences[0]
 
         # Create new content by replacing just the matched text
-        new_file_content = (
-            file_content[:idx] + new_str + file_content[idx + len(matched_text) :]
-        )
+        new_file_content = file_content[:idx] + new_str + file_content[idx + len(matched_text) :]
 
         # Write the new content to the file
         self.write_file(path, new_file_content)
@@ -221,9 +208,7 @@ class FileEditor:
 
         # Prepare the success message
         success_message = f"The file {path} has been edited. "
-        success_message += self._make_output(
-            snippet, f"a snippet of {path}", start_line + 1
-        )
+        success_message += self._make_output(snippet, f"a snippet of {path}", start_line + 1)
 
         success_message += "Review the changes and make sure they are as expected. Edit the file again if necessary."
         return StrReplaceEditorObservation(
@@ -234,9 +219,7 @@ class FileEditor:
             new_content=new_file_content,
         )
 
-    def view(
-        self, path: Path, view_range: list[int] | None = None
-    ) -> StrReplaceEditorObservation:
+    def view(self, path: Path, view_range: list[int] | None = None) -> StrReplaceEditorObservation:
         """
         View the contents of a file or a directory.
         """
@@ -250,12 +233,8 @@ class FileEditor:
 
             # First count hidden files/dirs in current directory only
             # -mindepth 1 excludes . and .. automatically
-            _, hidden_stdout, _ = run_shell_cmd(
-                rf"find -L {path} -mindepth 1 -maxdepth 1 -name '.*'"
-            )
-            hidden_count = (
-                len(hidden_stdout.strip().split("\n")) if hidden_stdout.strip() else 0
-            )
+            _, hidden_stdout, _ = run_shell_cmd(rf"find -L {path} -mindepth 1 -maxdepth 1 -name '.*'")
+            hidden_count = len(hidden_stdout.strip().split("\n")) if hidden_stdout.strip() else 0
 
             # Then get files/dirs up to 2 levels deep, excluding hidden entries at both depth 1 and 2
             _, stdout, stderr = run_shell_cmd(
@@ -272,14 +251,9 @@ class FileEditor:
                     else:
                         formatted_paths.append(p)
 
-                msg = [
-                    f"Here's the files and directories up to 2 levels deep in {path}, excluding hidden items:\n"
-                    + "\n".join(formatted_paths)
-                ]
+                msg = [f"Here's the files and directories up to 2 levels deep in {path}, excluding hidden items:\n" + "\n".join(formatted_paths)]
                 if hidden_count > 0:
-                    msg.append(
-                        f"\n{hidden_count} hidden files/directories in this directory are excluded. You can use 'ls -la {path}' to see them."
-                    )
+                    msg.append(f"\n{hidden_count} hidden files/directories in this directory are excluded. You can use 'ls -la {path}' to see them.")
                 stdout = "\n".join(msg)
             return StrReplaceEditorObservation(
                 output=stdout,
@@ -336,9 +310,7 @@ class FileEditor:
         file_content = self.read_file(path, start_line=start_line, end_line=end_line)
 
         # Get the detected encoding
-        output = self._make_output(
-            "\n".join(file_content.splitlines()), str(path), start_line
-        )  # Remove extra newlines
+        output = self._make_output("\n".join(file_content.splitlines()), str(path), start_line)  # Remove extra newlines
 
         # Prepend warning if we truncated the end_line
         if warning_message:
@@ -400,9 +372,7 @@ class FileEditor:
         new_str_lines = new_str.split("\n")
 
         # Create temporary file for the new content
-        with tempfile.NamedTemporaryFile(
-            mode="w", encoding=encoding, delete=False
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", encoding=encoding, delete=False) as temp_file:
             # Copy lines before insert point and save them for history
             history_lines = []
             with open(path, "r", encoding=encoding) as f:
@@ -468,9 +438,7 @@ class FileEditor:
         """
         # Check if its an absolute path
         if not path.is_absolute():
-            suggestion_message = (
-                "The path should be an absolute path, starting with `/`."
-            )
+            suggestion_message = "The path should be an absolute path, starting with `/`."
 
             # Only suggest the absolute path if cwd is provided and the path exists
             if self._cwd is not None:
@@ -584,9 +552,7 @@ class FileEditor:
                             lines.append(line)
                 return "".join(lines)
             elif start_line is not None or end_line is not None:
-                raise ValueError(
-                    "Both start_line and end_line must be provided together"
-                )
+                raise ValueError("Both start_line and end_line must be provided together")
             else:
                 # Use line-by-line reading to avoid loading entire file into memory
                 with open(path, "r", encoding=encoding) as f:
@@ -606,27 +572,10 @@ class FileEditor:
         """
         # If the content is converted from Markdown, we don't need line numbers
         if is_converted_markdown:
-            snippet_content = maybe_truncate(
-                snippet_content, truncate_notice=BINARY_FILE_CONTENT_TRUNCATED_NOTICE
-            )
-            return (
-                f"Here's the content of the file {snippet_description} displayed in Markdown format:\n"
-                + snippet_content
-                + "\n"
-            )
+            snippet_content = maybe_truncate(snippet_content, truncate_notice=BINARY_FILE_CONTENT_TRUNCATED_NOTICE)
+            return f"Here's the content of the file {snippet_description} displayed in Markdown format:\n" + snippet_content + "\n"
 
-        snippet_content = maybe_truncate(
-            snippet_content, truncate_notice=TEXT_FILE_CONTENT_TRUNCATED_NOTICE
-        )
+        snippet_content = maybe_truncate(snippet_content, truncate_notice=TEXT_FILE_CONTENT_TRUNCATED_NOTICE)
 
-        snippet_content = "\n".join(
-            [
-                f"{i + start_line:6}\t{line}"
-                for i, line in enumerate(snippet_content.split("\n"))
-            ]
-        )
-        return (
-            f"Here's the result of running `cat -n` on {snippet_description}:\n"
-            + snippet_content
-            + "\n"
-        )
+        snippet_content = "\n".join([f"{i + start_line:6}\t{line}" for i, line in enumerate(snippet_content.split("\n"))])
+        return f"Here's the result of running `cat -n` on {snippet_description}:\n" + snippet_content + "\n"

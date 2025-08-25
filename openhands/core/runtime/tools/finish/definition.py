@@ -2,8 +2,8 @@
 
 from pydantic import Field
 
-from openhands.core.runtime.tool import Tool, ToolAnnotations
 from openhands.core.runtime.schema import ActionBase
+from openhands.core.runtime.tool import Tool, ToolAnnotations
 
 
 class FinishAction(ActionBase):

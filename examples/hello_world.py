@@ -1,15 +1,17 @@
 import os
+
 from pydantic import SecretStr
+
 from openhands.core import (
-    OpenHandsConfig,
+    LLM,
+    CodeActAgent,
     Conversation,
     LLMConfig,
     Message,
+    OpenHandsConfig,
     TextContent,
-    LLM,
     Tool,
     get_logger,
-    CodeActAgent,
 )
 from openhands.core.runtime.tools import (
     BashExecutor,
@@ -17,6 +19,7 @@ from openhands.core.runtime.tools import (
     execute_bash_tool,
     str_replace_editor_tool,
 )
+
 
 logger = get_logger(__name__)
 
@@ -48,10 +51,6 @@ conversation = Conversation(agent=agent)
 conversation.send_message(
     message=Message(
         role="user",
-        content=[
-            TextContent(
-                text="Hello! Can you create a new Python file named hello.py that prints 'Hello, World!'?"
-            )
-        ],
+        content=[TextContent(text="Hello! Can you create a new Python file named hello.py that prints 'Hello, World!'?")],
     )
 )

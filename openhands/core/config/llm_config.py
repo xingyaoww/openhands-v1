@@ -3,8 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
+from openhands.core.logger import ENV_LOG_DIR, get_logger
 
-from openhands.core.logger import get_logger, ENV_LOG_DIR
 
 logger = get_logger(__name__)
 
@@ -63,9 +63,7 @@ class LLMConfig(BaseModel):
     retry_min_wait: int = Field(default=8)
     retry_max_wait: int = Field(default=64)
     timeout: int | None = Field(default=None)
-    max_message_chars: int = Field(
-        default=30_000
-    )  # maximum number of characters in an observation's content when sent to the llm
+    max_message_chars: int = Field(default=30_000)  # maximum number of characters in an observation's content when sent to the llm
     temperature: float = Field(default=0.0)
     top_p: float = Field(default=1.0)
     top_k: float | None = Field(default=None)
@@ -83,9 +81,7 @@ class LLMConfig(BaseModel):
     disable_stop_word: bool | None = Field(default=False)
     caching_prompt: bool = Field(default=True)
     log_completions: bool = Field(default=False)
-    log_completions_folder: str = Field(
-        default=os.path.join(ENV_LOG_DIR, "completions")
-    )
+    log_completions_folder: str = Field(default=os.path.join(ENV_LOG_DIR, "completions"))
     custom_tokenizer: str | None = Field(default=None)
     native_tool_calling: bool | None = Field(default=None)
     reasoning_effort: str | None = Field(default=None)
@@ -125,8 +121,6 @@ class LLMConfig(BaseModel):
         if self.aws_access_key_id:
             os.environ["AWS_ACCESS_KEY_ID"] = self.aws_access_key_id.get_secret_value()
         if self.aws_secret_access_key:
-            os.environ["AWS_SECRET_ACCESS_KEY"] = (
-                self.aws_secret_access_key.get_secret_value()
-            )
+            os.environ["AWS_SECRET_ACCESS_KEY"] = self.aws_secret_access_key.get_secret_value()
         if self.aws_region_name:
             os.environ["AWS_REGION_NAME"] = self.aws_region_name

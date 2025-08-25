@@ -1,8 +1,9 @@
 """OpenHands package."""
 
 import os
-from pathlib import Path
 from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+
 
 __package_name__ = "openhands-ai"
 

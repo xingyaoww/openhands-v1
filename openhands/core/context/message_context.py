@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
-from openhands.core.microagents import MicroagentKnowledge
+
 from openhands.core.llm.message import Message, TextContent
+from openhands.core.microagents import MicroagentKnowledge
+
 from .prompt import PromptManager
 
 

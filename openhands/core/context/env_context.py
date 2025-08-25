@@ -1,7 +1,10 @@
 from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, Field
-from openhands.core.microagents import MicroagentKnowledge
+
 from openhands.core.llm.message import TextContent
+from openhands.core.microagents import MicroagentKnowledge
+
 
 if TYPE_CHECKING:
     from .prompt import PromptManager
@@ -9,9 +12,7 @@ if TYPE_CHECKING:
 
 class RuntimeInfo(BaseModel):
     date: str = Field(description="Current date in YYYY-MM-DD format")
-    available_hosts: dict[str, int] = Field(
-        default_factory=dict, description="Available hosts for agents to deploy to"
-    )
+    available_hosts: dict[str, int] = Field(default_factory=dict, description="Available hosts for agents to deploy to")
     additional_agent_instructions: str = Field(
         default="",
         description="Additional instructions for the agent to follow during the conversation",
@@ -20,23 +21,15 @@ class RuntimeInfo(BaseModel):
         default_factory=dict,
         description="Descriptions of custom secrets available to the agent",
     )
-    working_dir: str = Field(
-        default="", description="Current working directory of the agent"
-    )
+    working_dir: str = Field(default="", description="Current working directory of the agent")
 
 
 class RepositoryInfo(BaseModel):
     """Information about a GitHub repository that has been cloned."""
 
-    repo_name: str | None = Field(
-        None, description="Name of the repository, e.g., 'username/repo'"
-    )
-    repo_directory: str | None = Field(
-        None, description="Local directory path where the repository is cloned"
-    )
-    branch_name: str | None = Field(
-        None, description="Current branch name of the repository"
-    )
+    repo_name: str | None = Field(None, description="Name of the repository, e.g., 'username/repo'")
+    repo_directory: str | None = Field(None, description="Local directory path where the repository is cloned")
+    branch_name: str | None = Field(None, description="Current branch name of the repository")
 
 
 class ConversationInstructions(BaseModel):
@@ -60,16 +53,12 @@ class EnvContext(BaseModel):
     This is typically provided at the start of a session and send to the LLM as part of the initial prompt.
     """
 
-    repository_info: RepositoryInfo | None = Field(
-        None, description="Information about the cloned GitHub repository"
-    )
+    repository_info: RepositoryInfo | None = Field(None, description="Information about the cloned GitHub repository")
     repository_instructions: str | None = Field(
         None,
         description="Additional instructions specific to the repository, e.g., relevant files or areas to focus on",
     )
-    runtime_info: RuntimeInfo | None = Field(
-        None, description="Information about the current runtime environment"
-    )
+    runtime_info: RuntimeInfo | None = Field(None, description="Information about the current runtime environment")
     conversation_instructions: ConversationInstructions | None = Field(
         None,
         description="Optional instructions the agent must follow throughout the conversation while addressing the user's initial task",
@@ -83,12 +72,7 @@ class EnvContext(BaseModel):
         """Renders the environment context into a string using the provided PromptManager."""
         message_content = []
         # Build the workspace context information
-        if (
-            self.repository_info
-            or self.runtime_info
-            or self.repository_instructions
-            or self.conversation_instructions
-        ):
+        if self.repository_info or self.runtime_info or self.repository_instructions or self.conversation_instructions:
             formatted_workspace_text = prompt_manager.build_workspace_context(
                 repository_info=self.repository_info,
                 runtime_info=self.runtime_info,

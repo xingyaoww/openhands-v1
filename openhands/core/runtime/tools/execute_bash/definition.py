@@ -2,20 +2,18 @@
 
 from pydantic import Field
 
-from openhands.core.runtime.tool import Tool, ToolAnnotations
 from openhands.core.runtime.schema import ActionBase, ObservationBase
 from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
+from openhands.core.runtime.tool import Tool, ToolAnnotations
 
-from .metadata import CmdOutputMetadata
 from .constants import NO_CHANGE_TIMEOUT_SECONDS
+from .metadata import CmdOutputMetadata
 
 
 class ExecuteBashAction(ActionBase):
     """Schema for bash command execution."""
 
-    command: str = Field(
-        description="The bash command to execute. Can be empty string to view additional logs when previous exit code is `-1`. Can be `C-c` (Ctrl+C) to interrupt the currently running process. Note: You can only execute one bash command at a time. If you need to run multiple commands sequentially, you can use `&&` or `;` to chain them together."
-    )
+    command: str = Field(description="The bash command to execute. Can be empty string to view additional logs when previous exit code is `-1`. Can be `C-c` (Ctrl+C) to interrupt the currently running process. Note: You can only execute one bash command at a time. If you need to run multiple commands sequentially, you can use `&&` or `;` to chain them together.")
     is_input: bool = Field(
         default=False,
         description="If True, the command is an input to the running process. If False, the command is a bash command to be executed in the terminal. Default is False.",
@@ -43,9 +41,7 @@ class ExecuteBashObservation(ObservationBase):
         default=False,
         description="Whether there was an error during command execution.",
     )
-    timeout: bool = Field(
-        default=False, description="Whether the command execution timed out."
-    )
+    timeout: bool = Field(default=False, description="Whether the command execution timed out.")
     metadata: CmdOutputMetadata = Field(
         default_factory=CmdOutputMetadata,
         description="Additional metadata captured from PS1 after command execution.",

@@ -1,6 +1,6 @@
+from ...tool import ToolExecutor
 from .bash_session import BashSession
 from .definition import ExecuteBashAction, ExecuteBashObservation
-from ...tool import ToolExecutor
 
 
 class BashExecutor(ToolExecutor):
