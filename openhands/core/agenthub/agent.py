@@ -1,5 +1,7 @@
+from typing import Callable
+
 from openhands.core.llm import LLM
-from openhands.core.runtime import Tool
+from openhands.core.runtime import Tool, ActionBase, ObservationBase
 from openhands.core.context.env_context import EnvContext
 from openhands.core.llm.message import Message
 from openhands.core.logger import get_logger
@@ -53,10 +55,17 @@ class AgentBase:
         """Resets the Agent's internal state."""
         pass
 
-    def run(self, user_input: Message) -> None:
+    def run(
+        self,
+        user_input: Message,
+        on_event: Callable[[Message | ActionBase | ObservationBase], None]
+        | None = None,
+    ) -> None:
         """Runs the Agent with the given input and returns the output.
 
         The agent will stop when it reaches a terminal state, such as
         completing its task by calling "finish" or messaging the user by calling "message".
+        Implementations should invoke `on_event` (if provided) for any
+        Messages, Actions, or Observations they produce.
         """
         raise NotImplementedError("Subclasses must implement this method.")
