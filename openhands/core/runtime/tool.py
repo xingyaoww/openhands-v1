@@ -2,6 +2,8 @@ import re
 from typing import Any, Callable, TypeVar, Generic
 from pydantic import BaseModel, Field
 from .schema import ActionBase, ObservationBase, Schema
+from openai.types.chat import ChatCompletionToolParam
+from openai.types.shared_params.function_definition import FunctionDefinition
 
 ActionT = TypeVar("ActionT", bound=ActionBase)
 ObservationT = TypeVar("ObservationT", bound=ObservationBase)
@@ -52,9 +54,9 @@ class Tool(Generic[ActionT, ObservationT]):
         self,
         *,
         name: str,
+        description: str,
         input_schema: type[ActionBase] | dict[str, Any],
         output_schema: type[ObservationBase] | dict[str, Any] | None = None,
-        description: str | None = None,
         annotations: ToolAnnotations | None = None,
         _meta: dict[str, Any] | None = None,
         execute_fn: Callable[[ActionT], ObservationT] | None = None,
@@ -150,3 +152,16 @@ class Tool(Generic[ActionT, ObservationT]):
         if self.output_schema:
             out["outputSchema"] = self.output_schema
         return out
+
+    def to_openai_tool(self) -> ChatCompletionToolParam:
+        """Convert an MCP tool to an OpenAI tool."""
+        return ChatCompletionToolParam(
+            type="function",
+            function=FunctionDefinition(
+                name=self.name,
+                description=self.description,
+                parameters=self.input_schema,
+                strict=False,
+            ),
+        )
+
