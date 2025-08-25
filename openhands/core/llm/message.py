@@ -161,9 +161,7 @@ class Message(BaseModel):
         assert message.role != "function", "Function role is not supported"
         return Message(
             role=message.role,
-            content=[
-                TextContent(text=message.content)
-            ]
+            content=[TextContent(text=message.content)]
             if isinstance(message.content, str)
             else [],
             tool_calls=message.tool_calls,
