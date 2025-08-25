@@ -1092,7 +1092,7 @@ wheels = [
 ]
 
 [[package]]
-name = "openhands-ai"
+name = "openhands-sdk"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
