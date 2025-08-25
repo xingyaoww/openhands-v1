@@ -4,7 +4,7 @@ repos:
       - id: uv-format
         name: Format with uv format
         entry: uv
-        args: [format]
+        args: [run, ruff, format]
         language: system
         types: [python]
         pass_filenames: false

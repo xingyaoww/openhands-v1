@@ -29,3 +29,20 @@ dev = [
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["openhands"]
+combine-as-imports = true
+force-single-line = false
+lines-after-imports = 2
