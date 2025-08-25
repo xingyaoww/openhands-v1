@@ -2,6 +2,9 @@ from openhands.core.llm import LLM
 from openhands.core.runtime import Tool
 from openhands.core.context.env_context import EnvContext
 from openhands.core.llm.message import Message
+from openhands.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class AgentBase:
@@ -14,6 +17,12 @@ class AgentBase:
         """Initializes a new instance of the Agent class."""
         self._llm = llm
         self._tools = tools
+        self._name_to_tool: dict[str, Tool] = {}
+        for tool in tools:
+            if tool.name in self._name_to_tool:
+                raise ValueError(f"Duplicate tool name: {tool.name}")
+            logger.debug(f"Registering tool: {tool}")
+            self._name_to_tool[tool.name] = tool
         self._env_context = env_context
 
     @property
@@ -30,6 +39,10 @@ class AgentBase:
     def tools(self) -> list[Tool]:
         """Returns the list of tools available to the Agent."""
         return self._tools
+
+    def get_tool(self, name: str) -> Tool | None:
+        """Returns the tool with the given name, or None if not found."""
+        return self._name_to_tool.get(name)
 
     @property
     def env_context(self) -> EnvContext | None:
