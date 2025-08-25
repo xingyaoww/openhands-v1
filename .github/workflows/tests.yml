@@ -25,8 +25,16 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev
 
+      - name: Clean stale global pytest temp
+        run: rm -rf /tmp/pytest-of-* || true
+
+        
       - name: Run tests with coverage (term only)
         run: CI=true uv run pytest -vvxss -o tmp_path_retention=none -o tmp_path_retention_count=0 --cov=openhands --cov-report=term-missing tests/
+
+      - name: Inspect pytest temp usage
+        if: always()
+        run: du -sh "${{ runner.temp }}/pytest" || true
 
       - name: Build coverage XML (separate step, lower mem)
         if: always()
