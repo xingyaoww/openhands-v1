@@ -1,12 +1,9 @@
 import re
-import traceback
-from typing import Any
-
 import bashlex
 from bashlex.errors import ParsingError
-
+from typing import Any
+import traceback
 from openhands.core.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -23,7 +20,12 @@ def split_bash_commands(commands: str) -> list[str]:
         AttributeError,
     ):
         # Added AttributeError to catch 'str' object has no attribute 'kind' error (issue #8369)
-        logger.debug(f"Failed to parse bash commands\n[input]: {commands}\n[warning]: {traceback.format_exc()}\nThe original command will be returned as is.")
+        logger.debug(
+            f"Failed to parse bash commands\n"
+            f"[input]: {commands}\n"
+            f"[warning]: {traceback.format_exc()}\n"
+            f"The original command will be returned as is."
+        )
         # If parsing fails, return the original commands
         return [commands]
 
@@ -76,7 +78,11 @@ def escape_bash_special_chars(command: str) -> str:
 
         def visit_node(node: Any) -> None:
             nonlocal last_pos
-            if node.kind == "redirect" and hasattr(node, "heredoc") and node.heredoc is not None:
+            if (
+                node.kind == "redirect"
+                and hasattr(node, "heredoc")
+                and node.heredoc is not None
+            ):
                 # We're entering a heredoc - preserve everything as-is until we see EOF
                 # Store the heredoc end marker (usually 'EOF' but could be different)
                 between = command[last_pos : node.pos[0]]
@@ -98,7 +104,12 @@ def escape_bash_special_chars(command: str) -> str:
                 parts.append(between)
 
                 # Check if word_text is a quoted string or command substitution
-                if (word_text.startswith('"') and word_text.endswith('"')) or (word_text.startswith("'") and word_text.endswith("'")) or (word_text.startswith("$(") and word_text.endswith(")")) or (word_text.startswith("`") and word_text.endswith("`")):
+                if (
+                    (word_text.startswith('"') and word_text.endswith('"'))
+                    or (word_text.startswith("'") and word_text.endswith("'"))
+                    or (word_text.startswith("$(") and word_text.endswith(")"))
+                    or (word_text.startswith("`") and word_text.endswith("`"))
+                ):
                     # Preserve quoted strings, command substitutions, and heredoc content as-is
                     parts.append(word_text)
                 else:
@@ -128,5 +139,10 @@ def escape_bash_special_chars(command: str) -> str:
         parts.append(remaining)
         return "".join(parts)
     except (ParsingError, NotImplementedError, TypeError):
-        logger.debug(f"Failed to parse bash commands for special characters escape\n[input]: {command}\n[warning]: {traceback.format_exc()}\nThe original command will be returned as is.")
+        logger.debug(
+            f"Failed to parse bash commands for special characters escape\n"
+            f"[input]: {command}\n"
+            f"[warning]: {traceback.format_exc()}\n"
+            f"The original command will be returned as is."
+        )
         return command

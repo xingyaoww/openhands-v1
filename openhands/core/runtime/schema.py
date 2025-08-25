@@ -1,7 +1,5 @@
 from typing import Any, TypeVar
-
-from pydantic import BaseModel, ConfigDict, Field, create_model
-
+from pydantic import BaseModel, Field, ConfigDict, create_model
 
 S = TypeVar("S", bound="Schema")
 
@@ -98,7 +96,9 @@ class Schema(BaseModel):
         return _process_schema_node(full_schema, full_schema.get("$defs", {}))
 
     @classmethod
-    def from_mcp_schema(cls: type[S], model_name: str, schema: dict[str, Any]) -> type["S"]:
+    def from_mcp_schema(
+        cls: type[S], model_name: str, schema: dict[str, Any]
+    ) -> type["S"]:
         """Create a Schema subclass from an MCP/JSON Schema object."""
         assert isinstance(schema, dict), "Schema must be a dict"
         assert schema.get("type") == "object", "Only object schemas are supported"
@@ -110,10 +110,14 @@ class Schema(BaseModel):
         for fname, spec in props.items():
             tp = py_type(spec if isinstance(spec, dict) else {})
             default = ... if fname in required else None
-            desc: str | None = spec.get("description") if isinstance(spec, dict) else None
+            desc: str | None = (
+                spec.get("description") if isinstance(spec, dict) else None
+            )
             fields[fname] = (
                 tp,
-                Field(default=default, description=desc) if desc else Field(default=default),
+                Field(default=default, description=desc)
+                if desc
+                else Field(default=default),
             )
         return create_model(model_name, __base__=cls, **fields)  # type: ignore[return-value]
 
