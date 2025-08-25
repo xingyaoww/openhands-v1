@@ -77,6 +77,11 @@ class Tool(Generic[ActionT, ObservationT]):
 
         self.executor = executor
 
+    def set_executor(self, executor: ToolExecutor) -> "Tool":
+        """Set or replace the executor function."""
+        self.executor = executor
+        return self
+
     def _set_input_schema(
         self, input_schema: dict[str, Any] | type[ActionBase]
     ) -> None:
