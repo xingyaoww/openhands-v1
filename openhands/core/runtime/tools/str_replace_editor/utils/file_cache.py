@@ -2,7 +2,6 @@ import hashlib
 import json
 import os
 import time
-import tempfile
 from pathlib import Path
 from typing import Any, Optional
 
@@ -34,65 +33,49 @@ class FileCache:
 
     def set(self, key: str, value: Any) -> None:
         file_path = self._get_file_path(key)
+        content = json.dumps({"key": key, "value": value})
+        content_size = len(content.encode("utf-8"))
+        logger.debug(f"Setting key: {key}, content_size: {content_size}")
 
-        # Stream to a temporary file to avoid building large in-memory buffers
-        # and to be able to determine the exact size without double-encoding.
-        tmp_fd, tmp_path = tempfile.mkstemp(dir=self.directory, suffix=".tmp")
-        os.close(tmp_fd)
-        try:
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump({"key": key, "value": value}, f, ensure_ascii=False)
-
-            content_size = os.path.getsize(tmp_path)
-            logger.debug(f"Setting key: {key}, content_size: {content_size}")
-
-            if self.size_limit is not None:
-                if file_path.exists():
-                    old_size = file_path.stat().st_size
-                    size_diff = content_size - old_size
-                    logger.debug(
-                        f"Existing file: old_size: {old_size}, size_diff: {size_diff}"
-                    )
-                    if size_diff > 0:
-                        while (
-                            self.current_size + size_diff > self.size_limit
-                            and len(self) > 1
-                        ):
-                            logger.debug(
-                                f"Evicting oldest (existing file case): current_size: {self.current_size}, size_limit: {self.size_limit}"
-                            )
-                            self._evict_oldest(file_path)
-                else:
+        if self.size_limit is not None:
+            if file_path.exists():
+                old_size = file_path.stat().st_size
+                size_diff = content_size - old_size
+                logger.debug(
+                    f"Existing file: old_size: {old_size}, size_diff: {size_diff}"
+                )
+                if size_diff > 0:
                     while (
-                        self.current_size + content_size > self.size_limit and len(self) > 1
+                        self.current_size + size_diff > self.size_limit
+                        and len(self) > 1
                     ):
                         logger.debug(
-                            f"Evicting oldest (new file case): current_size: {self.current_size}, size_limit: {self.size_limit}"
+                            f"Evicting oldest (existing file case): current_size: {self.current_size}, size_limit: {self.size_limit}"
                         )
                         self._evict_oldest(file_path)
+            else:
+                while (
+                    self.current_size + content_size > self.size_limit and len(self) > 1
+                ):
+                    logger.debug(
+                        f"Evicting oldest (new file case): current_size: {self.current_size}, size_limit: {self.size_limit}"
+                    )
+                    self._evict_oldest(file_path)
 
-            if file_path.exists():
-                self.current_size -= file_path.stat().st_size
-                logger.debug(
-                    f"Existing file removed from current_size: {self.current_size}"
-                )
+        if file_path.exists():
+            self.current_size -= file_path.stat().st_size
+            logger.debug(
+                f"Existing file removed from current_size: {self.current_size}"
+            )
 
-            # Atomically replace the destination file
-            os.replace(tmp_path, file_path)
-            tmp_path = None  # prevent deletion below
+        with open(file_path, "w") as f:
+            f.write(content)
 
-            self.current_size += content_size
-            logger.debug(f"File written, new current_size: {self.current_size}")
-            os.utime(
-                file_path, (time.time(), time.time())
-            )  # Update access and modification time
-        finally:
-            # Clean up the temp file if it still exists (i.e., on error)
-            if tmp_path and os.path.exists(tmp_path):
-                try:
-                    os.remove(tmp_path)
-                except Exception:
-                    pass
+        self.current_size += content_size
+        logger.debug(f"File written, new current_size: {self.current_size}")
+        os.utime(
+            file_path, (time.time(), time.time())
+        )  # Update access and modification time
 
     def _evict_oldest(self, exclude_path: Optional[Path] = None):
         oldest_file = min(
