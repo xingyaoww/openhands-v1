@@ -25,8 +25,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev
 
-      - name: Run tests with coverage
-        run: uv run pytest -v --cov=openhands --cov-report=xml:coverage.xml --cov-report=term-missing tests/
+      - name: Run tests with coverage (term only)
+        run: uv run pytest -v --cov=openhands --cov-report=term-missing tests/
+
+      - name: Build coverage XML (separate step, lower mem)
+        if: always()
+        run: uv run coverage xml -i -o coverage.xml
 
       - name: Code Coverage Summary
         if: ${{ always() && hashFiles('coverage.xml') != '' }}
