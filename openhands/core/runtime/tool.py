@@ -1,5 +1,5 @@
 import re
-from typing import Any, Callable, TypeVar, Generic
+from typing import Any, TypeVar, Generic
 from pydantic import BaseModel, Field
 from .schema import ActionBase, ObservationBase, Schema
 from openai.types.chat import ChatCompletionToolParam
@@ -41,6 +41,13 @@ class ToolAnnotations(BaseModel):
     )
 
 
+class ToolExecutor(Generic[ActionT, ObservationT]):
+    """Executor function type for a Tool."""
+
+    def __call__(self, action: ActionT) -> ObservationT:
+        raise NotImplementedError
+
+
 class Tool(Generic[ActionT, ObservationT]):
     """Tool that wraps an executor function with input/output validation and schema.
 
@@ -59,7 +66,7 @@ class Tool(Generic[ActionT, ObservationT]):
         output_schema: type[ObservationBase] | dict[str, Any] | None = None,
         annotations: ToolAnnotations | None = None,
         _meta: dict[str, Any] | None = None,
-        execute_fn: Callable[[ActionT], ObservationT] | None = None,
+        executor: ToolExecutor | None = None,
     ):
         self.name = name
         self.description = description
@@ -68,7 +75,7 @@ class Tool(Generic[ActionT, ObservationT]):
         self._set_input_schema(input_schema)
         self._set_output_schema(output_schema)
 
-        self.execute_fn = execute_fn
+        self.executor = executor
 
     def _set_input_schema(
         self, input_schema: dict[str, Any] | type[ActionBase]
@@ -116,11 +123,11 @@ class Tool(Generic[ActionT, ObservationT]):
 
         We always return some ObservationBase subclass, but not always the generic ObservationT.
         """
-        if self.execute_fn is None:
+        if self.executor is None:
             raise NotImplementedError(f"Tool '{self.name}' has no executor")
 
         # Execute
-        result = self.execute_fn(action)
+        result = self.executor(action)
 
         # Coerce output only if we declared a model; else wrap in base ObservationBase
         if self.observation_type:
