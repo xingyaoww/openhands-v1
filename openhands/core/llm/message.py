@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Literal, cast
 
 from litellm import ChatCompletionMessageToolCall
+from litellm.types.utils import Message as LiteLLMMessage
 from pydantic import BaseModel, Field, model_serializer
 
 
@@ -153,3 +154,17 @@ class Message(BaseModel):
             message_dict["name"] = self.name
 
         return message_dict
+
+    @classmethod
+    def from_litellm_message(cls, message: LiteLLMMessage) -> "Message":
+        """Convert a litellm LiteLLMMessage to our Message class."""
+        assert message.role != "function", "Function role is not supported"
+        return Message(
+            role=message.role,
+            content=[
+                TextContent(text=message.content)
+            ]
+            if isinstance(message.content, str)
+            else [],
+            tool_calls=message.tool_calls,
+        )
