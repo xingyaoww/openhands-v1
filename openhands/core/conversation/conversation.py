@@ -104,28 +104,9 @@ class ConversationVisualizer:
 
     def _render_observation(self, observation: ObservationBase) -> None:
         """Render an observation with smart content handling."""
-        obs_data = observation.model_dump()
-
         # Extract the most relevant content
-        content = ""
-        if "output" in obs_data and obs_data["output"]:
-            content = str(obs_data["output"])
-        elif "error" in obs_data and obs_data["error"]:
-            content = f"❌ Error: {obs_data['error']}"
-        elif "message" in obs_data and obs_data["message"]:
-            content = str(obs_data["message"])
-        else:
-            # Fallback to showing key fields
-            key_fields = ["path", "exit_code", "command"]
-            parts = []
-            for field in key_fields:
-                if field in obs_data and obs_data[field] is not None:
-                    parts.append(f"{field}: {obs_data[field]}")
-            content = " | ".join(parts) if parts else "No output"
-
-        # Truncate very long output
-        if len(content) > 500:
-            content = content[:497] + "..."
+        obs_data = observation.model_dump()
+        content = observation.agent_observation
 
         # Color code based on success/failure
         border_style = (
