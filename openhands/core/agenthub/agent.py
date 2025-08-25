@@ -9,7 +9,7 @@ class AgentBase:
         self,
         llm: LLM,
         tools: list[Tool],
-        env_context: EnvContext,
+        env_context: EnvContext | None = None,
     ) -> None:
         """Initializes a new instance of the Agent class."""
         self._llm = llm
@@ -32,7 +32,7 @@ class AgentBase:
         return self._tools
 
     @property
-    def env_context(self) -> EnvContext:
+    def env_context(self) -> EnvContext | None:
         """Returns the environment context used by the Agent."""
         return self._env_context
 

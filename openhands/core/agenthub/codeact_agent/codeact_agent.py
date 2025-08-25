@@ -17,7 +17,7 @@ class CodeActAgent(AgentBase):
         self,
         llm: LLM,
         tools: list[Tool],
-        env_context: EnvContext,
+        env_context: EnvContext | None = None,
         system_prompt_filename: str = "system_prompt.j2",
         cli_mode: bool = True,
     ) -> None:
@@ -54,18 +54,20 @@ class CodeActAgent(AgentBase):
             self.history.messages.append(
                 Message(role="system", content=[self.system_message])
             )
-            initial_env_context: list[TextContent] = self.env_context.render(
-                self.prompt_manager
-            )
-            self.history.messages.append(
-                Message(role="user", content=user_input.content + initial_env_context)
-            )
+            content = user_input.content
+            if self.env_context:
+                initial_env_context: list[TextContent] = self.env_context.render(
+                    self.prompt_manager
+                )
+                content += initial_env_context
+            self.history.messages.append(Message(role="user", content=content))
 
             # Track activated microagents in the history
-            for microagent in self.env_context.activated_microagents:
-                self.history.microagent_activations.append(
-                    (microagent.name, len(self.history.messages) - 1)
-                )
+            if self.env_context and self.env_context.activated_microagents:
+                for microagent in self.env_context.activated_microagents:
+                    self.history.microagent_activations.append(
+                        (microagent.name, len(self.history.messages) - 1)
+                    )
 
         # For subsequent messages, just append the user input
         else:
@@ -73,16 +75,15 @@ class CodeActAgent(AgentBase):
             # then track it in self.history.microagent_activations
             self.history.messages.append(user_input)
 
-        params: dict = {
-            "messages": self.llm.format_messages_for_llm(self.history.messages),
-        }
-        params["tools"] = [tool.to_openai_tool() for tool in self.tools]
-        params["extra_body"] = {
-            "metadata": get_llm_metadata(
-                model_name=self.llm.config.model, agent_name=self.name
-            )
-        }
-        response = self.llm.completion(**params)
+        response = self.llm.completion(
+            messages=self.llm.format_messages_for_llm(self.history.messages),
+            tools=[tool.to_openai_tool() for tool in self.tools],
+            extra_body={
+                "metadata": get_llm_metadata(
+                    model_name=self.llm.config.model, agent_name=self.name
+                )
+            },
+        )
         logger.debug(f"Response from LLM: {response}")
         import pdb
 
