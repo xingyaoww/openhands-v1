@@ -1,6 +1,8 @@
 import os
 
-import openhands
+
+# Define version directly to avoid circular import
+__version__ = "1.0.0"
 
 
 def get_llm_metadata(
@@ -10,12 +12,12 @@ def get_llm_metadata(
     user_id: str | None = None,
 ) -> dict:
     metadata = {
-        "trace_version": openhands.__version__,
+        "trace_version": __version__,
         "tags": [
             f"model:{model_name}",
             f"agent:{agent_name}",
             f"web_host:{os.environ.get('WEB_HOST', 'unspecified')}",
-            f"openhands_version:{openhands.__version__}",
+            f"openhands_version:{__version__}",
         ],
     }
     if session_id is not None:

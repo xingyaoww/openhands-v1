@@ -6,6 +6,8 @@ from .logger import ENV_LOG_DIR, get_logger
 from .runtime import ActionBase, ObservationBase, Tool
 
 
+__version__ = "1.0.0"
+
 __all__ = [
     "LLM",
     "Message",
@@ -22,4 +24,5 @@ __all__ = [
     "get_logger",
     "ENV_LOG_DIR",
     "Conversation",
+    "__version__",
 ]
