@@ -2,7 +2,7 @@ import os
 
 from pydantic import SecretStr
 
-from openhands.sdk import (
+from openhands.core import (
     LLM,
     CodeActAgent,
     Conversation,

@@ -2,9 +2,9 @@
 
 from pydantic import Field
 
-from openhands.sdk.runtime.schema import ActionBase, ObservationBase
-from openhands.sdk.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
-from openhands.sdk.runtime.tool import Tool, ToolAnnotations
+from openhands.core.runtime.schema import ActionBase, ObservationBase
+from openhands.core.runtime.security import SECURITY_RISK_DESC, SECURITY_RISK_LITERAL
+from openhands.core.runtime.tool import Tool, ToolAnnotations
 
 from .constants import NO_CHANGE_TIMEOUT_SECONDS
 from .metadata import CmdOutputMetadata

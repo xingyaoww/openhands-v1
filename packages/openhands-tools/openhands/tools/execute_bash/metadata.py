@@ -6,7 +6,7 @@ import traceback
 
 from pydantic import BaseModel, Field
 
-from openhands.sdk.logger import get_logger
+from openhands.core.logger import get_logger
 
 from .constants import (
     CMD_OUTPUT_METADATA_PS1_REGEX,
