@@ -1,6 +1,6 @@
 # UV workspace configuration
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["openhands/core", "openhands/tools"]
 
 # Workspace sources for intra-repo dependencies
 [tool.uv.sources]
