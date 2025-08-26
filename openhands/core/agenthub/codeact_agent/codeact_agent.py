@@ -8,6 +8,7 @@ from litellm.types.utils import (
     Message as LiteLLMMessage,
     ModelResponse,
 )
+from pydantic import Field
 
 from openhands.core.agenthub.agent import AgentBase
 from openhands.core.agenthub.history import AgentHistory
@@ -15,11 +16,41 @@ from openhands.core.context.env_context import EnvContext
 from openhands.core.context.prompt import PromptManager
 from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
 from openhands.core.logger import get_logger
-from openhands.core.runtime import ActionBase, ObservationBase, Tool
-from openhands.core.runtime.tools import FinishAction, finish_tool
+from openhands.core.tool import ActionBase, ObservationBase, Tool, ToolAnnotations
 
 
 logger = get_logger(__name__)
+
+class FinishAction(ActionBase):
+    message: str = Field(description="Final message to send to the user.")
+
+_FINISH_TOOL_DESCRIPTION = """Signals the completion of the current task or conversation.
+
+Use this tool when:
+- You have successfully completed the user's requested task
+- You cannot proceed further due to technical limitations or missing information
+
+The message should include:
+- A clear summary of actions taken and their results
+- Any next steps for the user
+- Explanation if you're unable to complete the task
+- Any follow-up questions if more information is needed
+"""
+
+
+finish_tool = Tool(
+    name="finish",
+    input_schema=FinishAction,
+    description=_FINISH_TOOL_DESCRIPTION,
+    annotations=ToolAnnotations(
+        title="finish",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
+)
+
 
 
 class CodeActAgent(AgentBase):
