@@ -34,3 +34,15 @@ known-first-party = ["openhands"]
 combine-as-imports = true
 force-single-line = false
 lines-after-imports = 2
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = [
+    "openhands/core/tests",
+    "openhands/tools/tests", 
+    "tests/integration"
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
