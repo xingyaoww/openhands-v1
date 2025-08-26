@@ -1,0 +1,20 @@
+[project]
+name = "openhands-sdk"
+version = "1.0.0"
+description = "OpenHands SDK - Core functionality for building AI agents"
+
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.11.3",
+    "litellm>=1.75.9",
+    "pydantic>=2.11.7",
+    "python-frontmatter>=1.1.0",
+    "tenacity>=9.1.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["openhands"]

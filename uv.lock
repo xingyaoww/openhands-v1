@@ -2,6 +2,22 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "openhands-sdk",
+    "openhands-tools",
+]
+
+[manifest.dependency-groups]
+dev = [
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "psutil", specifier = ">=7.0.0" },
+    { name = "pyright", specifier = ">=1.1.404" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "ruff", specifier = ">=0.12.10" },
+]
+
 [[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
@@ -1094,27 +1110,35 @@ wheels = [
 [[package]]
 name = "openhands-sdk"
 version = "1.0.0"
-source = { editable = "." }
+source = { editable = "packages/openhands-sdk" }
 dependencies = [
-    { name = "bashlex" },
-    { name = "binaryornot" },
-    { name = "cachetools" },
     { name = "fastmcp" },
-    { name = "libtmux" },
     { name = "litellm" },
     { name = "pydantic" },
     { name = "python-frontmatter" },
     { name = "tenacity" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-    { name = "psutil" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=2.11.3" },
+    { name = "litellm", specifier = ">=1.75.9" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "python-frontmatter", specifier = ">=1.1.0" },
+    { name = "tenacity", specifier = ">=9.1.2" },
+]
+
+[[package]]
+name = "openhands-tools"
+version = "1.0.0"
+source = { editable = "packages/openhands-tools" }
+dependencies = [
+    { name = "bashlex" },
+    { name = "binaryornot" },
+    { name = "cachetools" },
+    { name = "libtmux" },
+    { name = "openhands-sdk" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
@@ -1122,22 +1146,9 @@ requires-dist = [
     { name = "bashlex", specifier = ">=0.18" },
     { name = "binaryornot", specifier = ">=0.4.4" },
     { name = "cachetools", specifier = ">=6.1.0" },
-    { name = "fastmcp", specifier = ">=2.11.3" },
     { name = "libtmux", specifier = ">=0.46.2" },
-    { name = "litellm", specifier = ">=1.75.9" },
+    { name = "openhands-sdk", editable = "packages/openhands-sdk" },
     { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "python-frontmatter", specifier = ">=1.1.0" },
-    { name = "tenacity", specifier = ">=9.1.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pre-commit", specifier = ">=4.3.0" },
-    { name = "psutil", specifier = ">=7.0.0" },
-    { name = "pyright", specifier = ">=1.1.404" },
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "ruff", specifier = ">=0.12.10" },
 ]
 
 [[package]]
