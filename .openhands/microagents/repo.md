@@ -118,33 +118,56 @@ When seeing code, make three quick judgments:
 "Wrong data structure, should be..."
 </ROLE>
 
-<TASK>
-# Prototype for OpenHands V1
+This repo has two python packages, with unit tests specifically written for each package.
+```
+├── Makefile
+├── README.md
+├── examples
+├── openhands
+│   ├── __init__.py
+│   ├── core
+│   │   ├── __init__.py
+│   │   ├── agent
+│   │   ├── config
+│   │   ├── context
+│   │   ├── conversation
+│   │   ├── llm
+│   │   ├── logger.py
+│   │   ├── pyproject.toml
+│   │   ├── tests  # <- unit test for openhands/core
+│   │   ├── tool
+│   │   └── utils
+│   └── tools
+│       ├── __init__.py
+│       ├── execute_bash
+│       ├── pyproject.toml
+│       ├── str_replace_editor
+│       ├── tests  # <- unit test for openhands/tools
+│       └── utils
+├── pyproject.toml
+├── tests  # <- integration test that involves both openhands/core and openhands/tools
+│   ├── __init__.py
+└── uv.lock
+```
 
-This project contains my tasks of completely refactor [OpenHands](https://github.com/All-Hands-AI/OpenHands) project V0 into the new V1 version. There's a lot of changes, including (non-exhausive):
 
-- Switching from poetry to uv as package manager
-- better dependency management
-  - include `--dev` group for development only
-- stricter pre-commit hooks `.pre-commit-config.yaml` that includes
+<DEV_SETUP>
+- Make sure you `make build` to configure the dependency first
+- We use pre-commit hooks `.pre-commit-config.yaml` that includes:
   - type check through pyright
   - linting and formatter with `uv ruff`
-- cleaner architecture for how a tool works and how it is executed
-  - read about how we define tools: [`openhands/core/runtime/tool.py`](openhands/core/runtime/tool.py)
-  - read about how we define schema (input/output) for tools: [`openhands/core/runtime/schema.py`](openhands/core/runtime/schema.py)
-  - read about patterns for how we define an executable tool:
-    - read [openhands/core/runtime/tools/str_replace_editor/impl.py](openhands/core/runtime/tools/str_replace_editor/impl.py) for tool execute_fn
-    - read [openhands/core/runtime/tools/str_replace_editor/definition.py](openhands/core/runtime/tools/str_replace_editor/definition.py) for how do we define a tool
-    - read [openhands/core/runtime/tools/str_replace_editor/__init__.py](openhands/core/runtime/tools/str_replace_editor/__init__.py) for how we define each tool module
-- Check how we perform tests in .github/workflows/tests.yml
-- ...
-</TASK>
-
-<NOTE>
 - Do NOT commit ALL the file, just commit the relavant file you've changed!
 - in every commit message, you should add "Co-authored-by: openhands <openhands@all-hands.dev>"
 - You can run pytest with `uv run pytest`
-- Don't write TOO MUCH test, you should write just enough to cover edge cases.
-- AFTER you edit ONE file, you should run pre-commit hook on that file via `uv run pre-commit run --files [filepath]` to make sure you didn't break it.
+</DEV_SETUP>
+
+<CODE>
 - Avoid hacky trick like `sys.path.insert` when resolving package dependency
-</NOTE>
+</CODE>
+
+<TESTING>
+- AFTER you edit ONE file, you should run pre-commit hook on that file via `uv run pre-commit run --files [filepath]` to make sure you didn't break it.
+- Don't write TOO MUCH test, you should write just enough to cover edge cases.
+- Check how we perform tests in .github/workflows/tests.yml
+- You should put unit tests in the corresponding test folder. For example, to test `openhands/core/tool/tool.py`, you should put tests under `openhands/core/tests/tool/test_tool.py`.
+</TESTING>
