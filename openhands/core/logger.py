@@ -26,7 +26,7 @@ ENV_ROTATE_WHEN = os.getenv("LOG_ROTATE_WHEN", "midnight")
 ENV_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", "7"))
 ENV_FORMAT = os.getenv(
     "LOG_FORMAT",
-    "%(asctime)s | %(levelname)s | %(name)s | %(pathname)s:%(lineno)d | %(message)s",
+    "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s",
 )
 ENV_AUTO_CONFIG = os.getenv("LOG_AUTO_CONFIG", "true").lower() in {"1", "true", "yes"}
 ENV_DEBUG_LLM = os.getenv("DEBUG_LLM", "False").lower() in ["true", "1", "yes"]
