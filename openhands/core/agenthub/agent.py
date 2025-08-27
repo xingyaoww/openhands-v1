@@ -4,7 +4,7 @@ from openhands.core.context.env_context import EnvContext
 from openhands.core.llm import LLM
 from openhands.core.llm.message import Message
 from openhands.core.logger import get_logger
-from openhands.core.runtime import ActionBase, ObservationBase, Tool
+from openhands.core.tool import ActionBase, ObservationBase, Tool
 
 
 logger = get_logger(__name__)

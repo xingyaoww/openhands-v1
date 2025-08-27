@@ -8,7 +8,7 @@ from rich.panel import Panel
 
 from openhands.core.agenthub.agent import AgentBase
 from openhands.core.llm import Message, TextContent
-from openhands.core.runtime import ActionBase, ObservationBase
+from openhands.core.tool import ActionBase, ObservationBase
 
 
 OnEvent = Callable[[Message | ActionBase | ObservationBase], None]

@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 from pydantic import Field
 
-from openhands.core.runtime.schema import ActionBase, ObservationBase
-from openhands.core.runtime.tool import Tool, ToolAnnotations, ToolExecutor
+from openhands.core.tool import ActionBase, ObservationBase, Tool, ToolAnnotations, ToolExecutor
 
 
 class MockAction(ActionBase):

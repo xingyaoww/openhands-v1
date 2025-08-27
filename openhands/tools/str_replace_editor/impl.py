@@ -1,4 +1,4 @@
-from openhands.core.runtime.tool import ToolExecutor
+from openhands.core.tool import ToolExecutor
 
 from .definition import (
     CommandLiteral,
