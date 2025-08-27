@@ -62,7 +62,7 @@ jobs:
         continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          recreate: true
+          header: Coverage Report
           path: code-coverage-results.md
 
       - name: Upload coverage artifacts
