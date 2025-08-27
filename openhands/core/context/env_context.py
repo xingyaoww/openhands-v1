@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, Field
 
 from openhands.core.llm.message import TextContent
-from openhands.core.microagents import MicroagentKnowledge
+
+from .microagents import MicroagentKnowledge
 
 
 if TYPE_CHECKING:
