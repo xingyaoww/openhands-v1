@@ -146,4 +146,5 @@ This project contains my tasks of completely refactor [OpenHands](https://github
 - You can run pytest with `uv run pytest`
 - Don't write TOO MUCH test, you should write just enough to cover edge cases.
 - AFTER you edit ONE file, you should run pre-commit hook on that file via `uv run pre-commit run --files [filepath]` to make sure you didn't break it.
+- Avoid hacky trick like `sys.path.insert` when resolving package dependency
 </NOTE>
