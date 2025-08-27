@@ -1,20 +1,11 @@
-[project]
-name = "openhands-sdk"
-version = "1.0.0"
-description = "OpenHands: Code Less, Make More"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "bashlex>=0.18",  # TODO: move these to separate runtime projects
-    "binaryornot>=0.4.4",  # TODO: move these to separate runtime projects
-    "cachetools>=6.1.0",  # TODO: move these to separate runtime projects
-    "fastmcp>=2.11.3",
-    "libtmux>=0.46.2",  # TODO: move these to separate runtime projects
-    "litellm>=1.75.9",
-    "pydantic>=2.11.7",
-    "python-frontmatter>=1.1.0",
-    "tenacity>=9.1.2",
-]
+# UV workspace configuration
+[tool.uv.workspace]
+members = ["openhands/core", "openhands/tools"]
+
+# Workspace sources for intra-repo dependencies
+[tool.uv.sources]
+openhands-sdk = { workspace = true }
+openhands-tools = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -25,10 +16,6 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.12.10",
 ]
-
-[build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
 
 # Ruff configuration
 [tool.ruff]
@@ -47,3 +34,15 @@ known-first-party = ["openhands"]
 combine-as-imports = true
 force-single-line = false
 lines-after-imports = 2
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = [
+    "openhands/core/tests",
+    "openhands/tools/tests", 
+    "tests"
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
