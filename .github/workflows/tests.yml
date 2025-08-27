@@ -70,17 +70,6 @@ jobs:
           header: Coverage Report
           path: code-coverage-results.md
 
-      - name: Upload coverage artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-artifacts
-          path: |
-            coverage.xml
-            coverage_collapsed.xml
-            code-coverage-results.md
-            docs/assets/coverage.svg
-          if-no-files-found: ignore
       - name: Parse coverage percent
         if: ${{ always() && github.event_name == 'pull_request' }}
         id: parsecov
