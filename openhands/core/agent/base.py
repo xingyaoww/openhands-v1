@@ -1,23 +1,28 @@
-from typing import Callable
+from abc import ABC, abstractmethod
 
 from openhands.core.context.env_context import EnvContext
+from openhands.core.conversation import ConversationCallbackType, ConversationState
 from openhands.core.llm import LLM
-from openhands.core.llm.message import Message
 from openhands.core.logger import get_logger
-from openhands.core.tool import ActionBase, ObservationBase, Tool
+from openhands.core.tool import Tool
 
 
 logger = get_logger(__name__)
 
 
-class AgentBase:
+class AgentBase(ABC):
     def __init__(
         self,
         llm: LLM,
         tools: list[Tool],
         env_context: EnvContext | None = None,
     ) -> None:
-        """Initializes a new instance of the Agent class."""
+        """Initializes a new instance of the Agent class.
+        
+        Agent should be Stateless: every step only relies on:
+        1. input ConversationState
+        2. LLM/tools/env_context that were given in __init__
+        """
         self._llm = llm
         self._tools = tools
         self._name_to_tool: dict[str, Tool] = {}
@@ -52,20 +57,32 @@ class AgentBase:
         """Returns the environment context used by the Agent."""
         return self._env_context
 
-    def reset(self) -> None:
-        """Resets the Agent's internal state."""
-        pass
-
-    def run(
+    @abstractmethod
+    def init_state(
         self,
-        user_input: Message,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
-    ) -> None:
-        """Runs the Agent with the given input and returns the output.
+        state: ConversationState,
+        on_event: ConversationCallbackType | None = None,
+    ) -> ConversationState:
+        """Initialize the empty conversation state to prepare the agent for user messages.
 
-        The agent will stop when it reaches a terminal state, such as
-        completing its task by calling "finish" or messaging the user by calling "message".
-        Implementations should invoke `on_event` (if provided) for any
-        Messages, Actions, or Observations they produce.
+        Typically this involves:
+        1. Adding system message
+        2. Adding initial user messages with environment context
+            (e.g., microagents, current working dir, etc)
+        """
+        raise NotImplementedError("Subclasses must implement this method.")
+
+    @abstractmethod
+    def step(
+        self,
+        state: ConversationState,
+        on_event: ConversationCallbackType | None = None,
+    ) -> ConversationState:
+        """Taking a step in the conversation.
+
+        Typically this involves:
+        1. Making a LLM call
+        2. Executing the tool
+        3. Updating the conversation state with the LLM calls and tool results
         """
         raise NotImplementedError("Subclasses must implement this method.")

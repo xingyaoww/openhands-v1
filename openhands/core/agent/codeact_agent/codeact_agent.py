@@ -10,13 +10,13 @@ from litellm.types.utils import (
 )
 from pydantic import Field
 
-from openhands.core.agenthub.agent import AgentBase
-from openhands.core.agenthub.history import AgentHistory
-from openhands.core.context.env_context import EnvContext
-from openhands.core.context.prompt import PromptManager
+from openhands.core.context import EnvContext, PromptManager
+from openhands.core.conversation import ConversationCallbackType, ConversationState
 from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
 from openhands.core.logger import get_logger
 from openhands.core.tool import ActionBase, ObservationBase, Tool, ToolAnnotations
+
+from ..base import AgentBase
 
 
 logger = get_logger(__name__)
@@ -71,43 +71,43 @@ class CodeActAgent(AgentBase):
             system_prompt_filename=system_prompt_filename,
         )
         self.system_message: TextContent = self.prompt_manager.get_system_message(cli_mode=cli_mode)
-        self.history: AgentHistory = AgentHistory()
         self.max_iterations: int = 10
 
-    def reset(self) -> None:
-        super().reset()
-        self.history.clear()
-
-    def run(
+    def init_state(
         self,
-        user_input: Message,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
-    ) -> None:
-        assert user_input.role == "user", "Input message must have role 'user'"
-
-        if len(self.history) == 0:
+        state: ConversationState,
+        on_event: ConversationCallbackType | None = None,
+    ) -> ConversationState:
+        state.acquire()
+        # TODO(openhands): we should add test to test this init_state will actually modify state in-place
+        messages = state.history.messages
+        if len(messages) == 0:
             sys_msg = Message(role="system", content=[self.system_message])
-            self.history.messages.append(sys_msg)
+            messages.append(sys_msg)
             if on_event:
                 on_event(sys_msg)
-            content = user_input.content
+            content = state.history.messages[-1].content
             if self.env_context:
                 initial_env_context: list[TextContent] = self.env_context.render(self.prompt_manager)
                 content += initial_env_context
             user_msg = Message(role="user", content=content)
-            self.history.messages.append(user_msg)
+            messages.append(user_msg)
             if on_event:
                 on_event(user_msg)
-
             if self.env_context and self.env_context.activated_microagents:
                 for microagent in self.env_context.activated_microagents:
-                    self.history.microagent_activations.append((microagent.name, len(self.history.messages) - 1))
+                    state.history.microagent_activations.append((microagent.name, len(messages) - 1))
+        state.release()
+        return state
 
-        else:
-            self.history.messages.append(user_input)
-            if on_event:
-                on_event(user_input)
 
+    def step(
+        self,
+        state: ConversationState,
+        on_event: ConversationCallbackType | None = None,
+    ) -> ConversationState:
+        state.acquire()
+        # TODO(openhands): we should also test that this .step actually returns a modified state
         for i in range(self.max_iterations):
             logger.info(f"Agent Iteration {i + 1}/{self.max_iterations}")
             logger.debug(f"Agent History: {self.history}")

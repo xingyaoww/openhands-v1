@@ -1,6 +1,6 @@
 from importlib.metadata import PackageNotFoundError, version
 
-from .agenthub import AgentBase, CodeActAgent
+from .agent import AgentBase, CodeActAgent
 from .config import LLMConfig, MCPConfig, OpenHandsConfig
 from .conversation import Conversation
 from .llm import LLM, ImageContent, Message, TextContent
