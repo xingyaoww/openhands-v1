@@ -1,3 +1,5 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from .agenthub import AgentBase, CodeActAgent
 from .config import LLMConfig, MCPConfig, OpenHandsConfig
 from .conversation import Conversation
@@ -6,7 +8,10 @@ from .logger import ENV_LOG_DIR, get_logger
 from .tool import ActionBase, ObservationBase, Tool
 
 
-__version__ = "1.0.0"
+try:
+    __version__ = version("openhands-core")
+except PackageNotFoundError:
+    __version__ = "0.0.0"  # fallback for editable/unbuilt environments
 
 __all__ = [
     "LLM",

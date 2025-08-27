@@ -24,3 +24,11 @@ __all__ = [
     "StrReplaceEditorObservation",
     "FileEditorExecutor",
 ]
+
+from importlib.metadata import PackageNotFoundError, version
+
+
+try:
+    __version__ = version("openhands-core")
+except PackageNotFoundError:
+    __version__ = "0.0.0"  # fallback for editable/unbuilt environments
