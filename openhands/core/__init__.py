@@ -1,7 +1,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from .agent import AgentBase, CodeActAgent
-from .config import LLMConfig, MCPConfig, OpenHandsConfig
+from .config import LLMConfig, MCPConfig
 from .conversation import Conversation
 from .llm import LLM, ImageContent, Message, TextContent
 from .logger import get_logger
@@ -23,7 +23,6 @@ __all__ = [
     "CodeActAgent",
     "ActionBase",
     "ObservationBase",
-    "OpenHandsConfig",
     "LLMConfig",
     "MCPConfig",
     "get_logger",
