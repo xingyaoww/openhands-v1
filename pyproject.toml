@@ -40,7 +40,7 @@ lines-after-imports = 2
 testpaths = [
     "openhands/core/tests",
     "openhands/tools/tests", 
-    "tests/integration"
+    "tests"
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
