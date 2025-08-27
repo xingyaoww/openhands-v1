@@ -8,7 +8,6 @@ from openhands.core import (
     Conversation,
     LLMConfig,
     Message,
-    OpenHandsConfig,
     TextContent,
     Tool,
     get_logger,
@@ -26,14 +25,11 @@ logger = get_logger(__name__)
 # Configure LLM
 api_key = os.getenv("LITELLM_API_KEY")
 assert api_key is not None, "LITELLM_API_KEY environment variable is not set."
-config = OpenHandsConfig(
-    llm=LLMConfig(
-        model="litellm_proxy/anthropic/claude-sonnet-4-20250514",
-        base_url="https://llm-proxy.eval.all-hands.dev",
-        api_key=SecretStr(api_key),
-    )
-)
-llm = LLM(config=config.llm)
+llm = LLM(config=LLMConfig(
+    model="litellm_proxy/anthropic/claude-sonnet-4-20250514",
+    base_url="https://llm-proxy.eval.all-hands.dev",
+    api_key=SecretStr(api_key),
+))
 
 # Tools
 cwd = os.getcwd()
@@ -54,3 +50,4 @@ conversation.send_message(
         content=[TextContent(text="Hello! Can you create a new Python file named hello.py that prints 'Hello, World!'?")],
     )
 )
+conversation.run()

@@ -5,13 +5,13 @@ import sys
 from jinja2 import Environment, FileSystemLoader, Template
 
 from openhands.core.llm.message import TextContent
-from openhands.core.microagents import MicroagentKnowledge
 
 from .env_context import (
     ConversationInstructions,
     RepositoryInfo,
     RuntimeInfo,
 )
+from .microagents import MicroagentKnowledge
 
 
 def refine_prompt(prompt: str):

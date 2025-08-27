@@ -14,8 +14,10 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["openhands"]
+[tool.setuptools.packages.find]
+where = ["../.."]
+include = ["openhands*"]
+

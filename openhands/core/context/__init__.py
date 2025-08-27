@@ -4,7 +4,17 @@ from .env_context import (
     RepositoryInfo,
     RuntimeInfo,
 )
+from .history import AgentHistory
 from .message_context import MessageContext
+from .microagents import (
+    BaseMicroagent,
+    KnowledgeMicroagent,
+    MicroagentKnowledge,
+    MicroagentMetadata,
+    MicroagentType,
+    RepoMicroagent,
+    load_microagents_from_dir,
+)
 from .prompt import PromptManager
 
 
@@ -15,4 +25,12 @@ __all__ = [
     "ConversationInstructions",
     "MessageContext",
     "PromptManager",
+    "BaseMicroagent",
+    "KnowledgeMicroagent",
+    "RepoMicroagent",
+    "MicroagentMetadata",
+    "MicroagentType",
+    "MicroagentKnowledge",
+    "load_microagents_from_dir",
+    "AgentHistory",
 ]

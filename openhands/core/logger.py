@@ -17,16 +17,18 @@ import litellm
 
 # ========= ENV (loaded at import) =========
 LEVEL_MAP = logging.getLevelNamesMapping() if hasattr(logging, "getLevelNamesMapping") else logging._nameToLevel
-
+DEBUG = os.environ.get("DEBUG", "false").lower() in {"1", "true", "yes"}
 ENV_LOG_LEVEL_STR = os.getenv("LOG_LEVEL", "INFO").upper()
 ENV_LOG_LEVEL = LEVEL_MAP.get(ENV_LOG_LEVEL_STR, logging.INFO)
+if DEBUG:
+    ENV_LOG_LEVEL = logging.DEBUG
 ENV_LOG_TO_FILE = os.getenv("LOG_TO_FILE", "false").lower() in {"1", "true", "yes"}
 ENV_LOG_DIR = os.getenv("LOG_DIR", "logs")
 ENV_ROTATE_WHEN = os.getenv("LOG_ROTATE_WHEN", "midnight")
 ENV_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", "7"))
 ENV_FORMAT = os.getenv(
     "LOG_FORMAT",
-    "%(asctime)s | %(levelname)s | %(name)s | %(pathname)s:%(lineno)d | %(message)s",
+    "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s",
 )
 ENV_AUTO_CONFIG = os.getenv("LOG_AUTO_CONFIG", "true").lower() in {"1", "true", "yes"}
 ENV_DEBUG_LLM = os.getenv("DEBUG_LLM", "False").lower() in ["true", "1", "yes"]
