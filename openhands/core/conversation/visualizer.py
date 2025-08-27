@@ -107,4 +107,3 @@ class ConversationVisualizer:
         )
         self._console.print(panel)
         self._console.print()  # Add spacing after observations
-

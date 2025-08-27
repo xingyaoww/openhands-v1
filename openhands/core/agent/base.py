@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from types import MappingProxyType
 
 from openhands.core.context.env_context import EnvContext
 from openhands.core.conversation import ConversationCallbackType, ConversationState
@@ -18,20 +19,22 @@ class AgentBase(ABC):
         env_context: EnvContext | None = None,
     ) -> None:
         """Initializes a new instance of the Agent class.
-        
+
         Agent should be Stateless: every step only relies on:
         1. input ConversationState
         2. LLM/tools/env_context that were given in __init__
         """
         self._llm = llm
-        self._tools = tools
-        self._name_to_tool: dict[str, Tool] = {}
+        self._env_context = env_context
+
+        # Load tools into an immutable dict
+        _tools_map = {}
         for tool in tools:
-            if tool.name in self._name_to_tool:
+            if tool.name in _tools_map:
                 raise ValueError(f"Duplicate tool name: {tool.name}")
             logger.debug(f"Registering tool: {tool}")
-            self._name_to_tool[tool.name] = tool
-        self._env_context = env_context
+            _tools_map[tool.name] = tool
+        self._tools = MappingProxyType(_tools_map)
 
     @property
     def name(self) -> str:
@@ -44,13 +47,9 @@ class AgentBase(ABC):
         return self._llm
 
     @property
-    def tools(self) -> list[Tool]:
-        """Returns the list of tools available to the Agent."""
+    def tools(self) -> MappingProxyType[str, Tool]:
+        """Returns an immutable mapping of available tools from name."""
         return self._tools
-
-    def get_tool(self, name: str) -> Tool | None:
-        """Returns the tool with the given name, or None if not found."""
-        return self._name_to_tool.get(name)
 
     @property
     def env_context(self) -> EnvContext | None:
@@ -83,6 +82,9 @@ class AgentBase(ABC):
         Typically this involves:
         1. Making a LLM call
         2. Executing the tool
-        3. Updating the conversation state with the LLM calls and tool results
+        3. Updating the conversation state with
+            LLM calls (role="assistant") and tool results (role="tool")
+        4.1 If conversation is finished, set state.agent_finished flag
+        4.2 Otherwise, just return, Conversation will kick off the next step
         """
         raise NotImplementedError("Subclasses must implement this method.")

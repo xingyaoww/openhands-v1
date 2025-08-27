@@ -17,9 +17,11 @@ import litellm
 
 # ========= ENV (loaded at import) =========
 LEVEL_MAP = logging.getLevelNamesMapping() if hasattr(logging, "getLevelNamesMapping") else logging._nameToLevel
-
+DEBUG = os.environ.get("DEBUG", "false").lower() in {"1", "true", "yes"}
 ENV_LOG_LEVEL_STR = os.getenv("LOG_LEVEL", "INFO").upper()
 ENV_LOG_LEVEL = LEVEL_MAP.get(ENV_LOG_LEVEL_STR, logging.INFO)
+if DEBUG:
+    ENV_LOG_LEVEL = logging.DEBUG
 ENV_LOG_TO_FILE = os.getenv("LOG_TO_FILE", "false").lower() in {"1", "true", "yes"}
 ENV_LOG_DIR = os.getenv("LOG_DIR", "logs")
 ENV_ROTATE_WHEN = os.getenv("LOG_ROTATE_WHEN", "midnight")

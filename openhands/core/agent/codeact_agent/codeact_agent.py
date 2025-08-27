@@ -8,7 +8,7 @@ from litellm.types.utils import (
     Message as LiteLLMMessage,
     ModelResponse,
 )
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from openhands.core.context import EnvContext, PromptManager
 from openhands.core.conversation import ConversationCallbackType, ConversationState
@@ -42,7 +42,7 @@ The message should include:
 """
 
 
-finish_tool = Tool(
+FINISH_TOOL = Tool(
     name="finish",
     input_schema=FinishAction,
     description=TOOL_DESCRIPTION,
@@ -65,7 +65,8 @@ class CodeActAgent(AgentBase):
         system_prompt_filename: str = "system_prompt.j2",
         cli_mode: bool = True,
     ) -> None:
-        super().__init__(llm=llm, tools=tools + [finish_tool], env_context=env_context)
+        assert FINISH_TOOL not in tools, "Finish tool is automatically included and should not be provided."
+        super().__init__(llm=llm, tools=tools + [FINISH_TOOL], env_context=env_context)
         self.prompt_manager = PromptManager(
             prompt_dir=os.path.join(os.path.dirname(__file__), "prompts"),
             system_prompt_filename=system_prompt_filename,
@@ -78,7 +79,6 @@ class CodeActAgent(AgentBase):
         state: ConversationState,
         on_event: ConversationCallbackType | None = None,
     ) -> ConversationState:
-        state.acquire()
         # TODO(openhands): we should add test to test this init_state will actually modify state in-place
         messages = state.history.messages
         if len(messages) == 0:
@@ -97,75 +97,86 @@ class CodeActAgent(AgentBase):
             if self.env_context and self.env_context.activated_microagents:
                 for microagent in self.env_context.activated_microagents:
                     state.history.microagent_activations.append((microagent.name, len(messages) - 1))
-        state.release()
         return state
-
 
     def step(
         self,
         state: ConversationState,
         on_event: ConversationCallbackType | None = None,
     ) -> ConversationState:
-        state.acquire()
-        # TODO(openhands): we should also test that this .step actually returns a modified state
-        for i in range(self.max_iterations):
-            logger.info(f"Agent Iteration {i + 1}/{self.max_iterations}")
-            logger.debug(f"Agent History: {self.history}")
-            response: ModelResponse = self.llm.completion(
-                messages=self.llm.format_messages_for_llm(self.history.messages),
-                tools=[tool.to_openai_tool() for tool in self.tools],
-                extra_body={"metadata": get_llm_metadata(model_name=self.llm.config.model, agent_name=self.name)},
-            )
-            assert len(response.choices) == 1 and isinstance(response.choices[0], Choices)
-            llm_message: LiteLLMMessage = response.choices[0].message  # type: ignore
-            message = Message.from_litellm_message(llm_message)
-            self.history.messages.append(message)
-            if on_event:
-                on_event(message)
+        # Get LLM Response (Action)
+        _messages = self.llm.format_messages_for_llm(state.history.messages)
+        logger.debug(f"Sending messages to LLM: {json.dumps(_messages, indent=2)}")
+        response: ModelResponse = self.llm.completion(
+            messages=_messages,
+            tools=[tool.to_openai_tool() for tool in self.tools.values()],
+            extra_body={"metadata": get_llm_metadata(model_name=self.llm.config.model, agent_name=self.name)},
+        )
+        assert len(response.choices) == 1 and isinstance(response.choices[0], Choices)
+        llm_message: LiteLLMMessage = response.choices[0].message  # type: ignore
 
-            if message.tool_calls and len(message.tool_calls) > 0:
-                assert len(message.tool_calls) == 1, "Only one tool call is supported"
-                tool_call = message.tool_calls[0]
-                assert isinstance(tool_call, ChatCompletionMessageToolCall)
+        message = Message.from_litellm_message(llm_message)
+        state.history.messages.append(message)
+        if on_event:
+            on_event(message)
 
-                if tool_call.function.name == finish_tool.name:
-                    try:
-                        action = FinishAction.model_validate(json.loads(tool_call.function.arguments))
-                        if on_event:
-                            on_event(action)
-                    finally:
-                        return
-                else:
-                    observation_message = self._execute_tool_call(tool_call, on_event)
-                    self.history.messages.append(observation_message)
-                    if on_event:
-                        on_event(observation_message)
-            else:
-                logger.info("LLM produced a message response - awaits user input")
-                return
+        if message.tool_calls and len(message.tool_calls) > 0:
+            tool_call: ChatCompletionMessageToolCall
+            tool_calls = [tool_call for tool_call in message.tool_calls if tool_call.type == "function"]
+            assert len(tool_calls) > 0, "LLM returned tool calls but none are of type 'function'"
+            for tool_call in tool_calls:
+                state = self._handle_tool_call(tool_call, state, on_event)
+        else:
+            logger.info("LLM produced a message response - awaits user input")
+            state.agent_finished = True
+        return state
 
-    def _execute_tool_call(
+    def _handle_tool_call(
         self,
         tool_call: ChatCompletionMessageToolCall,
+        state: ConversationState,
         on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
-    ) -> Message:
+    ) -> ConversationState:
+        assert tool_call.type == "function"
         tool_name = tool_call.function.name
         assert tool_name is not None, "Tool call must have a name"
-        tool = self.get_tool(tool_name)
+        tool = self.tools.get(tool_name, None)
+        # Handle non-existing tools
         if tool is None:
-            raise ValueError(f"Tool '{tool_name}' called by LLM is not found")
+            err = f"Tool '{tool_name}' not found. Available: {list(self.tools.keys())}"
+            logger.error(err)
+            state.history.messages.append(Message(role="user", content=[TextContent(text=err)]))
+            state.agent_finished = True
+            return state
 
-        action: ActionBase = tool.action_type.model_validate(json.loads(tool_call.function.arguments))
-        if on_event:
-            on_event(action)
+        # Validate arguments
+        try:
+            action: ActionBase = tool.action_type.model_validate(json.loads(tool_call.function.arguments))
+            if on_event:
+                on_event(action)
+        except (json.JSONDecodeError, ValidationError) as e:
+            err = f"Error validating args {tool_call.function.arguments} for tool '{tool.name}': {e}"
+            logger.error(err)
+            state.history.messages.append(Message(role="tool", name=tool.name, tool_call_id=tool_call.id, content=[TextContent(text=err)]))
+            return state
+
+        # Early return for finish action (no need for tool execution)
+        if isinstance(action, FinishAction):
+            assert tool.name == FINISH_TOOL.name, "FinishAction must be used with the finish tool"
+            state.agent_finished = True
+            return state
+
+        # Execute actions!
         if tool.executor is None:
-            raise ValueError(f"Tool '{tool.name}' has no executor")
+            raise RuntimeError(f"Tool '{tool.name}' has no executor")
         observation: ObservationBase = tool.executor(action)
-        if on_event:
-            on_event(observation)
-        return Message(
+        tool_msg = Message(
             role="tool",
             name=tool.name,
             tool_call_id=tool_call.id,
             content=[TextContent(text=observation.agent_observation)],
         )
+        state.history.messages.append(tool_msg)
+        if on_event:
+            on_event(observation)
+        return state

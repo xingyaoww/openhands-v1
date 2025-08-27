@@ -8,9 +8,11 @@ def get_llm_metadata(
     user_id: str | None = None,
 ) -> dict:
     import openhands.core
+
     openhands_tools_version: str = "n/a"
     try:
         import openhands.tools
+
         openhands_tools_version = openhands.tools.__version__
     except ModuleNotFoundError:
         pass
