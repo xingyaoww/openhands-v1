@@ -5,13 +5,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 
 if TYPE_CHECKING:
     from .conversation import Conversation  # noqa
 
 from openhands.core.io import IOProtocol, LocalFS
+from openhands.core.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class PersistenceConfig(BaseModel):
@@ -105,9 +109,12 @@ class ConversationPersistence:
                     if not line:
                         continue
                     msg_dict = json.loads(line.decode("utf-8"))
-                    obj.state.history.messages.append(
-                        Message.model_validate(msg_dict)
-                    )
+                    try:
+                        obj.state.history.messages.append(
+                            Message.model_validate(msg_dict)
+                        )
+                    except ValidationError as e:
+                        logger.error(f"Failed to validate message from {path}: {e}")
         return obj
 
     # ---------- Internals ----------

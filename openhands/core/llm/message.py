@@ -3,7 +3,7 @@ from typing import Any, Literal, cast
 
 from litellm import ChatCompletionMessageToolCall
 from litellm.types.utils import Message as LiteLLMMessage
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import BaseModel, Field, field_validator, model_serializer
 
 
 class ContentType(Enum):
@@ -72,26 +72,21 @@ class Message(BaseModel):
     def contains_image(self) -> bool:
         return any(isinstance(content, ImageContent) for content in self.content)
 
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def _coerce_content(cls, v: Any) -> list[TextContent | ImageContent] | Any:
+        # Accept None → []
+        if v is None:
+            return []
+        # Accept a single string → [TextContent(...)]
+        if isinstance(v, str):
+            return [TextContent(text=v)]
+        return v
+
+
     @model_serializer(mode="plain")
     def serialize_model(self) -> dict[str, Any]:
-        # We need two kinds of serializations:
-        # - into a single string: for providers that don't support list of content items (e.g. no vision, no tool calls)
-        # - into a list of content items: the new APIs of providers with vision/prompt caching/tool calls
-        # NOTE: remove this when litellm or providers support the new API
-        if not self.force_string_serializer and (self.cache_enabled or self.vision_enabled or self.function_calling_enabled):
-            return self._list_serializer()
-        # some providers, like HF and Groq/llama, don't support a list here, but a single string
-        return self._string_serializer()
-
-    def _string_serializer(self) -> dict[str, Any]:
-        # convert content to a single string
-        content = "\n".join(item.text for item in self.content if isinstance(item, TextContent))
-        message_dict: dict[str, Any] = {"content": content, "role": self.role}
-
-        # add tool call keys if we have a tool call or response
-        return self._add_tool_call_keys(message_dict)
-
-    def _list_serializer(self) -> dict[str, Any]:
         content: list[dict[str, Any]] = []
         role_tool_with_prompt_caching = False
 
