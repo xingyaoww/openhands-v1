@@ -8,52 +8,19 @@ from litellm.types.utils import (
     Message as LiteLLMMessage,
     ModelResponse,
 )
-from pydantic import Field, ValidationError
+from pydantic import ValidationError
 
 from openhands.core.context import EnvContext, PromptManager
 from openhands.core.conversation import ConversationCallbackType, ConversationState
 from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
 from openhands.core.logger import get_logger
-from openhands.core.tool import ActionBase, ObservationBase, Tool, ToolAnnotations
+from openhands.core.tool import BUILT_IN_TOOLS, ActionBase, FinishTool, ObservationBase, Tool
 
 from ..base import AgentBase
 
 
 logger = get_logger(__name__)
 
-"""Finish tool implementation."""
-
-
-class FinishAction(ActionBase):
-    message: str = Field(description="Final message to send to the user.")
-
-
-TOOL_DESCRIPTION = """Signals the completion of the current task or conversation.
-
-Use this tool when:
-- You have successfully completed the user's requested task
-- You cannot proceed further due to technical limitations or missing information
-
-The message should include:
-- A clear summary of actions taken and their results
-- Any next steps for the user
-- Explanation if you're unable to complete the task
-- Any follow-up questions if more information is needed
-"""
-
-
-FINISH_TOOL = Tool(
-    name="finish",
-    input_schema=FinishAction,
-    description=TOOL_DESCRIPTION,
-    annotations=ToolAnnotations(
-        title="finish",
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
-    ),
-)
 
 
 class CodeActAgent(AgentBase):
@@ -65,8 +32,9 @@ class CodeActAgent(AgentBase):
         system_prompt_filename: str = "system_prompt.j2",
         cli_mode: bool = True,
     ) -> None:
-        assert FINISH_TOOL not in tools, "Finish tool is automatically included and should not be provided."
-        super().__init__(llm=llm, tools=tools + [FINISH_TOOL], env_context=env_context)
+        for tool in BUILT_IN_TOOLS:
+            assert tool not in tools, f"{tool} is automatically included and should not be provided."
+        super().__init__(llm=llm, tools=tools + BUILT_IN_TOOLS, env_context=env_context)
         self.prompt_manager = PromptManager(
             prompt_dir=os.path.join(os.path.dirname(__file__), "prompts"),
             system_prompt_filename=system_prompt_filename,
@@ -169,12 +137,6 @@ class CodeActAgent(AgentBase):
             state.history.messages.append(Message(role="tool", name=tool.name, tool_call_id=tool_call.id, content=[TextContent(text=err)]))
             return state
 
-        # Early return for finish action (no need for tool execution)
-        if isinstance(action, FinishAction):
-            assert tool.name == FINISH_TOOL.name, "FinishAction must be used with the finish tool"
-            state.agent_finished = True
-            return state
-
         # Execute actions!
         if tool.executor is None:
             raise RuntimeError(f"Tool '{tool.name}' has no executor")
@@ -188,4 +150,8 @@ class CodeActAgent(AgentBase):
         state.history.messages.append(tool_msg)
         if on_event:
             on_event(observation)
+
+        # Set conversation state
+        if tool.name == FinishTool.name:
+            state.agent_finished = True
         return state
