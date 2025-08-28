@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Callable
 
 from litellm.types.utils import (
     ChatCompletionMessageToolCall,
@@ -78,7 +77,7 @@ class CodeActAgent(AgentBase):
     def step(
         self,
         state: ConversationState,
-        on_event: ConversationCallbackType | None = None,
+        on_event: ConversationCallbackType,
     ) -> None:
         # Get LLM Response (Action)
         _messages = self.llm.format_messages_for_llm(state.history.messages)
@@ -93,8 +92,7 @@ class CodeActAgent(AgentBase):
 
         message = Message.from_litellm_message(llm_message)
         state.history.messages.append(message)
-        if on_event:
-            on_event(message)
+        on_event(message)
 
         if message.tool_calls and len(message.tool_calls) > 0:
             tool_call: ChatCompletionMessageToolCall
@@ -110,7 +108,7 @@ class CodeActAgent(AgentBase):
         self,
         tool_call: ChatCompletionMessageToolCall,
         state: ConversationState,
-        on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
+        on_event: ConversationCallbackType,
     ) -> None:
         """Handle tool calls from the LLM.
         
@@ -131,8 +129,12 @@ class CodeActAgent(AgentBase):
         # Validate arguments
         try:
             action: ActionBase = tool.action_type.model_validate(json.loads(tool_call.function.arguments))
-            if on_event:
-                on_event(action)
+            canceled = on_event(action)
+            if canceled:
+                msg = f"User canceled the execution of action: {action}"
+                state.history.messages.append(Message(role="tool", name=tool.name, tool_call_id=tool_call.id, content=[TextContent(text=msg)]))
+                state.agent_finished = True
+                return
         except (json.JSONDecodeError, ValidationError) as e:
             err = f"Error validating args {tool_call.function.arguments} for tool '{tool.name}': {e}"
             logger.error(err)
@@ -150,8 +152,7 @@ class CodeActAgent(AgentBase):
             content=[TextContent(text=observation.agent_observation)],
         )
         state.history.messages.append(tool_msg)
-        if on_event:
-            on_event(observation)
+        on_event(observation)
 
         # Set conversation state
         if tool.name == FinishTool.name:

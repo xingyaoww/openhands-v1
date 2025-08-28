@@ -5,4 +5,5 @@ from openhands.core.tool import ActionBase, ObservationBase
 
 
 ConversationEventType = Message | ActionBase | ObservationBase
-ConversationCallbackType = Callable[[ConversationEventType], None]
+ConversationCallbackReturnType = bool | None  # True means agent should cancel the message/action/observation, false or None means continue (no-op)
+ConversationCallbackType = Callable[[ConversationEventType], ConversationCallbackReturnType]

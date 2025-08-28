@@ -8,7 +8,7 @@ from openhands.core.llm import Message
 from openhands.core.logger import get_logger
 
 from .state import ConversationState
-from .types import ConversationCallbackType
+from .types import ConversationCallbackReturnType, ConversationCallbackType
 from .visualizer import ConversationVisualizer
 
 
@@ -16,10 +16,14 @@ logger = get_logger(__name__)
 
 
 def compose_callbacks(callbacks: Iterable[ConversationCallbackType]) -> ConversationCallbackType:
-    def composed(event) -> None:
+    def composed(event) -> ConversationCallbackReturnType:
+        ret: bool = False
         for cb in callbacks:
             if cb:
-                cb(event)
+                # If any of the callbacks return True, the composed callback should return True
+                # but we should still finish running the remaining callbacks
+                ret |= bool(cb(event))
+        return ret
     return composed
 
 class Conversation:

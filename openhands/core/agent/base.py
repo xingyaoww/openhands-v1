@@ -60,8 +60,8 @@ class AgentBase(ABC):
     def init_state(
         self,
         state: ConversationState,
-        initial_user_message: Message | None = None,
-        on_event: ConversationCallbackType | None = None,
+        initial_user_message: Message,
+        on_event: ConversationCallbackType,
     ) -> None:
         """Initialize the empty conversation state to prepare the agent for user messages.
 
@@ -78,7 +78,7 @@ class AgentBase(ABC):
     def step(
         self,
         state: ConversationState,
-        on_event: ConversationCallbackType | None = None,
+        on_event: ConversationCallbackType,
     ) -> None:
         """Taking a step in the conversation.
 

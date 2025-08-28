@@ -117,6 +117,11 @@ class Schema(BaseModel):
             )
         return create_model(model_name, __base__=cls, **fields)  # type: ignore[return-value]
 
+    def __str__(self) -> str:
+        return str(self.model_dump())
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.model_dump()})"
 
 class ActionBase(Schema):
     """Base schema for input action."""
