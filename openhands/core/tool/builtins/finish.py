@@ -1,12 +1,6 @@
-"""Implementing essential tools that doesn't interact with the environment.
-
-These are built in and are *required* for the agent to work.
-
-For tools that require interacting with the environment, add them to `openhands/tools`.
-"""
 from pydantic import Field
 
-from .tool import ActionBase, ObservationBase, Tool, ToolAnnotations, ToolExecutor
+from ..tool import ActionBase, ObservationBase, Tool, ToolAnnotations, ToolExecutor
 
 
 class FinishAction(ActionBase):
@@ -51,5 +45,3 @@ FinishTool = Tool(
         openWorldHint=False,
     ),
 )
-
-BUILT_IN_TOOLS = [FinishTool]
