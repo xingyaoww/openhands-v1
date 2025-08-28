@@ -22,7 +22,7 @@ class PersistenceConfig(BaseModel):
     """
     Plain JSON persistence using ordered object keys, no manifest, no compaction.
     """
-    index_width: int = 12
+    index_width: int = 4
     message_dir_name: str = "messages"
     base_state_name: str = "base_state.json"
 
