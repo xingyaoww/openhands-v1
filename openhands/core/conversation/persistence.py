@@ -55,14 +55,14 @@ class ConversationPersistence:
             self._write_base_state(base_path, obj, filestore)
 
             # 2) compute which indices are already on disk
-            saved_pred = self._build_saved_predicate(msg_dir, filestore)
+            saved_indices = self._saved_indices(msg_dir, filestore)
 
             # 3) write missing messages
             msgs = obj.state.history.messages
-            for idx in range(len(msgs)):
-                if saved_pred(idx):
+            for idx, msg in enumerate(msgs):
+                if idx in saved_indices:
                     continue
-                self._write_individual(msg_dir, idx, msgs[idx], filestore)
+                self._write_individual(msg_dir, idx, msg, filestore)
 
     def load(self, cls: "type[Conversation]", agent, dir_path: str, ConversationState, Message, file_store: FileStore | None = None, **kwargs) -> "Conversation":
         """
@@ -120,17 +120,13 @@ class ConversationPersistence:
         line = (json.dumps(msg_model.model_dump(), ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
         file_store.write(path, line)
 
-    def _build_saved_predicate(self, msg_dir: str, file_store: FileStore):
-        saved_indices: set[int] = set()
+    def _saved_indices(self, msg_dir: str, file_store: FileStore) -> set[int]:
+        saved: set[int] = set()
         for p in file_store.list(msg_dir):
             name = os.path.basename(p)
             m = self._RE_INDIV.match(name)
             if m:
-                saved_indices.add(int(m.group("idx")))
-
-        def saved(idx: int) -> bool:
-            return idx in saved_indices
-
+                saved.add(int(m.group("idx")))
         return saved
 
     @staticmethod
