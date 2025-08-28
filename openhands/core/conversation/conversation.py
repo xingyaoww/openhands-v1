@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from openhands.core.agent import AgentBase
-from threading import RLock
 
 from openhands.core.llm import Message
 from openhands.core.logger import get_logger
@@ -39,27 +38,22 @@ class Conversation:
         self.max_iteration_per_run = max_iteration_per_run
 
         self.agent = agent
-        self._agent_initialized = False
 
-        # Guarding the conversation state to prevent multiple
-        # writers modify it at the same time
-        self._lock = RLock()
         self.state = ConversationState()
 
     def send_message(self, message: Message) -> None:
         """Sending messages to the agent."""
-        with self._lock:
-            if not self._agent_initialized:
-                # Prepare initial state
-                self.state = self.agent.init_state(
+        with self.state:
+            if not self.state.agent_initialized:
+                # mutate in place; agent must follow this contract
+                self.agent.init_state(
                     self.state,
                     initial_user_message=message,
                     on_event=self._on_event,
                 )
-                self._agent_initialized = True
+                self.state.agent_initialized = True
             else:
-                messages = self.state.history.messages
-                messages.append(message)
+                self.state.history.messages.append(message)
                 if self._on_event:
                     self._on_event(message)
 
@@ -68,8 +62,14 @@ class Conversation:
         iteration = 0
         while not self.state.agent_finished:
             logger.debug(f"Conversation run iteration {iteration}")
-            with self._lock:
-                self.state = self.agent.step(self.state, on_event=self._on_event)
+            # TODO(openhands): we should add a testcase that test IF:
+            # 1. a loop is running
+            # 2. in a separate thread .send_message is called
+            # and check will we be able to execute .send_message
+            # BEFORE the .run loop finishes?
+            with self.state:
+                # step must mutate the SAME state object
+                self.agent.step(self.state, on_event=self._on_event)
             iteration += 1
             if iteration >= self.max_iteration_per_run:
                 break

@@ -47,7 +47,7 @@ class CodeActAgent(AgentBase):
         state: ConversationState,
         initial_user_message: Message | None = None,
         on_event: ConversationCallbackType | None = None,
-    ) -> ConversationState:
+    ) -> None:
         # TODO(openhands): we should add test to test this init_state will actually modify state in-place
         messages = state.history.messages
         if len(messages) == 0:
@@ -74,13 +74,12 @@ class CodeActAgent(AgentBase):
             if self.env_context and self.env_context.activated_microagents:
                 for microagent in self.env_context.activated_microagents:
                     state.history.microagent_activations.append((microagent.name, len(messages) - 1))
-        return state
 
     def step(
         self,
         state: ConversationState,
         on_event: ConversationCallbackType | None = None,
-    ) -> ConversationState:
+    ) -> None:
         # Get LLM Response (Action)
         _messages = self.llm.format_messages_for_llm(state.history.messages)
         logger.debug(f"Sending messages to LLM: {json.dumps(_messages, indent=2)}")
@@ -102,18 +101,21 @@ class CodeActAgent(AgentBase):
             tool_calls = [tool_call for tool_call in message.tool_calls if tool_call.type == "function"]
             assert len(tool_calls) > 0, "LLM returned tool calls but none are of type 'function'"
             for tool_call in tool_calls:
-                state = self._handle_tool_call(tool_call, state, on_event)
+                self._handle_tool_call(tool_call, state, on_event)
         else:
             logger.info("LLM produced a message response - awaits user input")
             state.agent_finished = True
-        return state
 
     def _handle_tool_call(
         self,
         tool_call: ChatCompletionMessageToolCall,
         state: ConversationState,
         on_event: Callable[[Message | ActionBase | ObservationBase], None] | None = None,
-    ) -> ConversationState:
+    ) -> None:
+        """Handle tool calls from the LLM.
+        
+        NOTE: state will be mutated in-place.
+        """
         assert tool_call.type == "function"
         tool_name = tool_call.function.name
         assert tool_name is not None, "Tool call must have a name"
@@ -124,7 +126,7 @@ class CodeActAgent(AgentBase):
             logger.error(err)
             state.history.messages.append(Message(role="user", content=[TextContent(text=err)]))
             state.agent_finished = True
-            return state
+            return
 
         # Validate arguments
         try:
@@ -135,7 +137,7 @@ class CodeActAgent(AgentBase):
             err = f"Error validating args {tool_call.function.arguments} for tool '{tool.name}': {e}"
             logger.error(err)
             state.history.messages.append(Message(role="tool", name=tool.name, tool_call_id=tool_call.id, content=[TextContent(text=err)]))
-            return state
+            return
 
         # Execute actions!
         if tool.executor is None:
@@ -154,4 +156,3 @@ class CodeActAgent(AgentBase):
         # Set conversation state
         if tool.name == FinishTool.name:
             state.agent_finished = True
-        return state
