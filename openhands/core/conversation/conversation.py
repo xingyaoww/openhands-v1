@@ -39,7 +39,6 @@ class Conversation:
         self.max_iteration_per_run = max_iteration_per_run
 
         self.agent = agent
-        self._agent_initialized = False
 
         # Guarding the conversation state to prevent multiple
         # writers modify it at the same time
@@ -49,14 +48,14 @@ class Conversation:
     def send_message(self, message: Message) -> None:
         """Sending messages to the agent."""
         with self._lock:
-            if not self._agent_initialized:
+            if not self.state.agent_initialized:
                 # Prepare initial state
                 self.state = self.agent.init_state(
                     self.state,
                     initial_user_message=message,
                     on_event=self._on_event,
                 )
-                self._agent_initialized = True
+                self.state.agent_initialized = True
             else:
                 messages = self.state.history.messages
                 messages.append(message)
