@@ -1,2 +1,5 @@
-from .local_fs import LocalFS as LocalFS
-from .typing import IOProtocol as IOProtocol
+from .local_fs import LocalFS
+from .typing import IOProtocol
+
+
+__all__ = ["LocalFS", "IOProtocol"]
