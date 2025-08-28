@@ -163,6 +163,7 @@ This repo has two python packages, with unit tests specifically written for each
 
 <CODE>
 - Avoid hacky trick like `sys.path.insert` when resolving package dependency
+- Use existing packages/libraries instead of implementing yourselves whenever possible.
 </CODE>
 
 <TESTING>
