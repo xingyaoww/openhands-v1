@@ -3,7 +3,7 @@ from types import MappingProxyType
 
 from openhands.core.context.env_context import EnvContext
 from openhands.core.conversation import ConversationCallbackType, ConversationState
-from openhands.core.llm import LLM
+from openhands.core.llm import LLM, Message
 from openhands.core.logger import get_logger
 from openhands.core.tool import Tool
 
@@ -60,6 +60,7 @@ class AgentBase(ABC):
     def init_state(
         self,
         state: ConversationState,
+        initial_user_message: Message | None = None,
         on_event: ConversationCallbackType | None = None,
     ) -> ConversationState:
         """Initialize the empty conversation state to prepare the agent for user messages.

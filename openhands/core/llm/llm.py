@@ -676,6 +676,7 @@ class LLM(RetryMixin):
     def __repr__(self) -> str:
         return str(self)
 
+    # TODO: we should ideally format this into a `to_litellm_message` for `Message` class`
     def format_messages_for_llm(self, messages: Message | list[Message]) -> list[dict]:
         if isinstance(messages, Message):
             messages = [messages]
