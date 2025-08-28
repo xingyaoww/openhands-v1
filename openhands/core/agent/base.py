@@ -62,13 +62,15 @@ class AgentBase(ABC):
         state: ConversationState,
         initial_user_message: Message | None = None,
         on_event: ConversationCallbackType | None = None,
-    ) -> ConversationState:
+    ) -> None:
         """Initialize the empty conversation state to prepare the agent for user messages.
 
         Typically this involves:
         1. Adding system message
         2. Adding initial user messages with environment context
             (e.g., microagents, current working dir, etc)
+
+        NOTE: state will be mutated in-place.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -77,7 +79,7 @@ class AgentBase(ABC):
         self,
         state: ConversationState,
         on_event: ConversationCallbackType | None = None,
-    ) -> ConversationState:
+    ) -> None:
         """Taking a step in the conversation.
 
         Typically this involves:
@@ -87,5 +89,7 @@ class AgentBase(ABC):
             LLM calls (role="assistant") and tool results (role="tool")
         4.1 If conversation is finished, set state.agent_finished flag
         4.2 Otherwise, just return, Conversation will kick off the next step
+
+        NOTE: state will be mutated in-place.
         """
         raise NotImplementedError("Subclasses must implement this method.")

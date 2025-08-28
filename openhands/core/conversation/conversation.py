@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from openhands.core.agent import AgentBase
-from threading import RLock
 
 from openhands.core.llm import Message
 from openhands.core.logger import get_logger
@@ -40,25 +39,21 @@ class Conversation:
 
         self.agent = agent
 
-        # Guarding the conversation state to prevent multiple
-        # writers modify it at the same time
-        self._lock = RLock()
         self.state = ConversationState()
 
     def send_message(self, message: Message) -> None:
         """Sending messages to the agent."""
-        with self._lock:
+        with self.state:
             if not self.state.agent_initialized:
-                # Prepare initial state
-                self.state = self.agent.init_state(
+                # mutate in place; agent must follow this contract
+                self.agent.init_state(
                     self.state,
                     initial_user_message=message,
                     on_event=self._on_event,
                 )
                 self.state.agent_initialized = True
             else:
-                messages = self.state.history.messages
-                messages.append(message)
+                self.state.history.messages.append(message)
                 if self._on_event:
                     self._on_event(message)
 
@@ -72,8 +67,9 @@ class Conversation:
             # 2. in a separate thread .send_message is called
             # and check will we be able to execute .send_message
             # BEFORE the .run loop finishes?
-            with self._lock:
-                self.state = self.agent.step(self.state, on_event=self._on_event)
+            with self.state:
+                # step must mutate the SAME state object
+                self.agent.step(self.state, on_event=self._on_event)
             iteration += 1
             if iteration >= self.max_iteration_per_run:
                 break
