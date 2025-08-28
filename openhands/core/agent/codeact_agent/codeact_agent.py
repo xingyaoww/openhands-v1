@@ -77,16 +77,25 @@ class CodeActAgent(AgentBase):
     def init_state(
         self,
         state: ConversationState,
+        initial_user_message: Message | None = None,
         on_event: ConversationCallbackType | None = None,
     ) -> ConversationState:
         # TODO(openhands): we should add test to test this init_state will actually modify state in-place
         messages = state.history.messages
         if len(messages) == 0:
+            # Prepare system message
             sys_msg = Message(role="system", content=[self.system_message])
             messages.append(sys_msg)
             if on_event:
                 on_event(sys_msg)
-            content = state.history.messages[-1].content
+            if initial_user_message is None:
+                raise ValueError("initial_user_message must be provided in init_state for CodeActAgent")
+            
+            # Prepare user message
+            content = initial_user_message.content
+            # TODO: think about this - we might want to handle this outside Agent but inside Conversation (e.g., in send_messages)
+            # downside of handling them inside Conversation would be: conversation don't have access
+            # to *any* action execution runtime information
             if self.env_context:
                 initial_env_context: list[TextContent] = self.env_context.render(self.prompt_manager)
                 content += initial_env_context

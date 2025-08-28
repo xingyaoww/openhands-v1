@@ -4,10 +4,13 @@ from pydantic import SecretStr
 
 from openhands.core import (
     LLM,
+    ActionBase,
     CodeActAgent,
     Conversation,
+    ConversationEventType,
     LLMConfig,
     Message,
+    ObservationBase,
     TextContent,
     Tool,
     get_logger,
@@ -42,7 +45,19 @@ tools: list[Tool] = [
 
 # Agent
 agent = CodeActAgent(llm=llm, tools=tools)
-conversation = Conversation(agent=agent)
+
+llm_messages = []  # collect raw LLM messages
+def conversation_callback(event: ConversationEventType):
+    # print all the actions
+    if isinstance(event, ActionBase):
+        logger.info(f"Found a conversation action: {event}")
+    elif isinstance(event, ObservationBase):
+        logger.info(f"Found a conversation observation: {event}")
+    elif isinstance(event, Message):
+        logger.info(f"Found a conversation message: {str(event)[:200]}...")
+        llm_messages.append(event.model_dump())
+
+conversation = Conversation(agent=agent, callbacks=[conversation_callback])
 
 conversation.send_message(
     message=Message(
@@ -51,3 +66,8 @@ conversation.send_message(
     )
 )
 conversation.run()
+
+print("="*100)
+print("Conversation finished. Got the following LLM messages:")
+for i, message in enumerate(llm_messages):
+    print(f"Message {i}: {str(message)[:200]}")
