@@ -93,6 +93,9 @@ class CodeActAgent(AgentBase):
             
             # Prepare user message
             content = initial_user_message.content
+            # TODO: think about this - we might want to handle this outside Agent but inside Conversation (e.g., in send_messages)
+            # downside of handling them inside Conversation would be: conversation don't have access
+            # to *any* action execution runtime information
             if self.env_context:
                 initial_env_context: list[TextContent] = self.env_context.render(self.prompt_manager)
                 content += initial_env_context
