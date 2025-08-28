@@ -1,5 +1,6 @@
-from .local_fs import LocalFS
-from .typing import IOProtocol
+from .base import FileStore
+from .local import LocalFileStore
+from .s3 import S3FileStore
 
 
-__all__ = ["LocalFS", "IOProtocol"]
+__all__ = ["LocalFileStore", "S3FileStore", "FileStore"]
