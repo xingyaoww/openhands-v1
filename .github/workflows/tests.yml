@@ -12,14 +12,6 @@ permissions:
 jobs:
   core-tests:
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && (
-        contains(github.event.pull_request.changed_files, 'openhands/core/') ||
-        contains(github.event.pull_request.changed_files, 'pyproject.toml') ||
-        contains(github.event.pull_request.changed_files, 'uv.lock') ||
-        contains(github.event.pull_request.changed_files, '.github/workflows/tests.yml')
-      ))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,21 +29,21 @@ jobs:
             .github/workflows/tests.yml
 
       - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
 
       - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
         
       - name: Run core tests with coverage
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           CI=true uv run pytest \
             -vvxss \
@@ -63,11 +55,11 @@ jobs:
             openhands/core/tests
 
       - name: Build coverage XML (separate step, lower mem)
-        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        if: steps.changed-files.outputs.any_changed == 'true' && always()
         run: uv run coverage xml -i -o coverage-core.xml
 
       - name: Upload core coverage artifact
-        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        if: steps.changed-files.outputs.any_changed == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-core
@@ -92,21 +84,21 @@ jobs:
             .github/workflows/tests.yml
 
       - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
 
       - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
         
       - name: Run tools tests with coverage
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           CI=true uv run pytest \
             -vvxss \
@@ -118,11 +110,11 @@ jobs:
             openhands/tools/tests
 
       - name: Build coverage XML (separate step, lower mem)
-        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        if: steps.changed-files.outputs.any_changed == 'true' && always()
         run: uv run coverage xml -i -o coverage-tools.xml
 
       - name: Upload tools coverage artifact
-        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        if: steps.changed-files.outputs.any_changed == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-tools
@@ -148,21 +140,21 @@ jobs:
             .github/workflows/tests.yml
 
       - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
 
       - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
         
       - name: Run integration tests
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           CI=true uv run pytest \
             -vvxss \
