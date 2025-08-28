@@ -6,7 +6,7 @@ For tools that require interacting with the environment, add them to `openhands/
 """
 from pydantic import Field
 
-from openhands.core.tool import ActionBase, ObservationBase, Tool, ToolAnnotations, ToolExecutor
+from .tool import ActionBase, ObservationBase, Tool, ToolAnnotations, ToolExecutor
 
 
 class FinishAction(ActionBase):
