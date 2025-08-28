@@ -14,7 +14,7 @@ from openhands.core.context import EnvContext, PromptManager
 from openhands.core.conversation import ConversationCallbackType, ConversationState
 from openhands.core.llm import LLM, Message, TextContent, get_llm_metadata
 from openhands.core.logger import get_logger
-from openhands.core.tool import BUILT_IN_TOOLS, ActionBase, ObservationBase, Tool
+from openhands.core.tool import BUILT_IN_TOOLS, ActionBase, FinishTool, ObservationBase, Tool
 
 from ..base import AgentBase
 
@@ -150,4 +150,8 @@ class CodeActAgent(AgentBase):
         state.history.messages.append(tool_msg)
         if on_event:
             on_event(observation)
+
+        # Set conversation state
+        if tool.name == FinishTool.name:
+            state.agent_finished = True
         return state
