@@ -4,13 +4,12 @@ from pydantic import SecretStr
 
 from openhands.core import (
     LLM,
-    ActionBase,
     CodeActAgent,
     Conversation,
-    ConversationEventType,
+    EventType,
     LLMConfig,
+    LLMConvertibleEvent,
     Message,
-    ObservationBase,
     TextContent,
     Tool,
     get_logger,
@@ -47,15 +46,10 @@ tools: list[Tool] = [
 agent = CodeActAgent(llm=llm, tools=tools)
 
 llm_messages = []  # collect raw LLM messages
-def conversation_callback(event: ConversationEventType):
-    # print all the actions
-    if isinstance(event, ActionBase):
-        logger.info(f"Found a conversation action: {event}")
-    elif isinstance(event, ObservationBase):
-        logger.info(f"Found a conversation observation: {event}")
-    elif isinstance(event, Message):
-        logger.info(f"Found a conversation message: {str(event)[:200]}...")
-        llm_messages.append(event.model_dump())
+def conversation_callback(event: EventType):
+    logger.info(f"Found a conversation message: {str(event)[:200]}...")
+    if isinstance(event, LLMConvertibleEvent):
+        llm_messages.append(event.to_llm_message())
 
 conversation = Conversation(agent=agent, callbacks=[conversation_callback])
 
