@@ -10,8 +10,171 @@ permissions:
   pull-requests: write
 
 jobs:
-  tests:
+  core-tests:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && (
+        contains(github.event.pull_request.changed_files, 'openhands/core/') ||
+        contains(github.event.pull_request.changed_files, 'pyproject.toml') ||
+        contains(github.event.pull_request.changed_files, 'uv.lock') ||
+        contains(github.event.pull_request.changed_files, '.github/workflows/tests.yml')
+      ))
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            openhands/core/**
+            pyproject.toml
+            uv.lock
+            .github/workflows/tests.yml
+
+      - name: Set up Python
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: uv sync --frozen --group dev
+        
+      - name: Run core tests with coverage
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: |
+          CI=true uv run pytest \
+            -vvxss \
+            --basetemp="${{ runner.temp }}/pytest" \
+            -o tmp_path_retention=none \
+            -o tmp_path_retention_count=0 \
+            --cov=openhands/core \
+            --cov-report=term-missing \
+            openhands/core/tests
+
+      - name: Build coverage XML (separate step, lower mem)
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        run: uv run coverage xml -i -o coverage-core.xml
+
+      - name: Upload core coverage artifact
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-core
+          path: coverage-core.xml
+
+  tools-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            openhands/tools/**
+            pyproject.toml
+            uv.lock
+            .github/workflows/tests.yml
+
+      - name: Set up Python
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: uv sync --frozen --group dev
+        
+      - name: Run tools tests with coverage
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: |
+          CI=true uv run pytest \
+            -vvxss \
+            --basetemp="${{ runner.temp }}/pytest" \
+            -o tmp_path_retention=none \
+            -o tmp_path_retention_count=0 \
+            --cov=openhands/tools \
+            --cov-report=term-missing \
+            openhands/tools/tests
+
+      - name: Build coverage XML (separate step, lower mem)
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        run: uv run coverage xml -i -o coverage-tools.xml
+
+      - name: Upload tools coverage artifact
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push') && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-tools
+          path: coverage-tools.xml
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            tests/**
+            openhands/**
+            pyproject.toml
+            uv.lock
+            .github/workflows/tests.yml
+
+      - name: Set up Python
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: uv sync --frozen --group dev
+        
+      - name: Run integration tests
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'push'
+        run: |
+          CI=true uv run pytest \
+            -vvxss \
+            --basetemp="${{ runner.temp }}/pytest" \
+            -o tmp_path_retention=none \
+            -o tmp_path_retention_count=0 \
+            tests
+
+  coverage-report:
+    runs-on: ubuntu-latest
+    needs: [core-tests, tools-tests]
+    if: always() && github.event_name == 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,25 +189,39 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen --group dev
-        
-      - name: Run tests with coverage
-        run: |
-          CI=true uv run pytest \
-            -vvxss \
-            --basetemp="${{ runner.temp }}/pytest" \
-            -o tmp_path_retention=none \
-            -o tmp_path_retention_count=0 \
-            --cov=openhands/core \
-            --cov=openhands/tools \
-            --cov-report=term-missing \
-            openhands/core/tests openhands/tools/tests tests
 
-      - name: Build coverage XML (separate step, lower mem)
-        if: always()
-        run: uv run coverage xml -i -o coverage.xml
+      - name: Download core coverage
+        if: needs.core-tests.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-core
+          path: ./
+        continue-on-error: true
+
+      - name: Download tools coverage
+        if: needs.tools-tests.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-tools
+          path: ./
+        continue-on-error: true
+
+      - name: Combine coverage reports
+        run: |
+          if [ -f coverage-core.xml ] && [ -f coverage-tools.xml ]; then
+            uv run coverage combine coverage-core.xml coverage-tools.xml
+            uv run coverage xml -o coverage.xml
+          elif [ -f coverage-core.xml ]; then
+            cp coverage-core.xml coverage.xml
+          elif [ -f coverage-tools.xml ]; then
+            cp coverage-tools.xml coverage.xml
+          else
+            echo "No coverage files found, skipping coverage report"
+            exit 0
+          fi
 
       - name: Pytest coverage PR comment
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: always()
         continue-on-error: true
         uses: MishaKav/pytest-coverage-comment@v1
         with:
