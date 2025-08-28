@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, ParamSpec
 
 
@@ -39,7 +38,7 @@ class Conversation:
         self._on_event = compose_callbacks(
             [self._visualizer.on_event] + (callbacks if callbacks else [])
         )
-        self._persist = ConversationPersistence()
+        self._persistence = ConversationPersistence()
         self.max_iteration_per_run = max_iteration_per_run
 
         self.agent = agent
@@ -79,21 +78,33 @@ class Conversation:
             if iteration >= self.max_iteration_per_run:
                 break
 
-    # Call after each message or at safe points:
-    def serialize_to_dir(self, dir_path: str | Path) -> None:
-        self._persist.save(self, dir_path)
+    
+    def save(self, dir_path: str) -> None:
+        """Save current conversation state + messages to disk."""
+        self._persistence.save(self, dir_path)
 
     @classmethod
-    def deserialize_from_dir(cls: type["Conversation"], dir_path: str | Path, agent: "AgentBase", **kwargs) -> "Conversation":
-        """Deserialize a Conversation instance from a directory.
+    def load(
+        cls,
+        dir_path: str,
+        agent: "AgentBase",
+        persistence: ConversationPersistence | None = None,
+        **kwargs
+    ) -> "Conversation":
+        """Load conversation state + messages from disk.
 
         Args:
-            dir_path (str | Path): The directory path to deserialize from.
-            agent (AgentBase): The agent instance to use.
-            **kwargs: Additional keyword arguments to pass to the Conversation constructor.
+            agent: The agent associated with the conversation.
+            dir_path: The directory path to load the conversation from.
+            persistence: The persistence layer to use (optional).
+            kwargs: Additional keyword arguments to pass to the conversation constructor.
         """
-        pers = ConversationPersistence()
-        return pers.load(cls, agent, dir_path, ConversationState=ConversationState, Message=Message, **kwargs)
-
-    def compact_storage(self, dir_path: str | Path) -> None:
-        self._persist.compact_now(dir_path)
+        persistence = persistence or ConversationPersistence()
+        return persistence.load(
+            cls,
+            agent,
+            dir_path,
+            ConversationState,
+            Message,
+            **(kwargs or {})
+        )

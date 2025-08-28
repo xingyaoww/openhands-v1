@@ -74,14 +74,14 @@ for i, message in enumerate(llm_messages):
 
 # Conversation persistence
 print("Serializing conversation...")
-conversation.serialize_to_dir("./conversation_data")
+conversation.save("./conversation_data")
 
 del conversation
 
 # Deserialize the conversation
 print("Deserializing conversation...")
-conversation = Conversation.deserialize_from_dir(
-    "./conversation_data",
+conversation = Conversation.load(
+    dir_path="./conversation_data",
     agent=agent,
     callbacks=[conversation_callback]
 )
