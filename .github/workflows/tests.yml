@@ -156,12 +156,21 @@ jobs:
       - name: Run integration tests
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          set +e
           CI=true uv run pytest \
             -vvxss \
             --basetemp="${{ runner.temp }}/pytest" \
             -o tmp_path_retention=none \
             -o tmp_path_retention_count=0 \
             tests
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 5 ]; then
+            echo "No integration tests collected. Treating as success."
+            exit 0
+          else
+            exit "$exit_code"
+          fi
 
   coverage-report:
     runs-on: ubuntu-latest
