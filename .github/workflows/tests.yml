@@ -201,8 +201,10 @@ jobs:
       - name: Combine coverage reports
         run: |
           if [ -f coverage-core.xml ] && [ -f coverage-tools.xml ]; then
-            uv run coverage combine coverage-core.xml coverage-tools.xml
-            uv run coverage xml -o coverage.xml
+            # For now, just use the core coverage as the main report
+            # since core and tools are separate packages
+            cp coverage-core.xml coverage.xml
+            echo "Using core coverage report (tools coverage available separately)"
           elif [ -f coverage-core.xml ]; then
             cp coverage-core.xml coverage.xml
           elif [ -f coverage-tools.xml ]; then
