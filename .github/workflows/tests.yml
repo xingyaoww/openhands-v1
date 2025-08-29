@@ -1,4 +1,5 @@
 name: Run tests
+
 on:
   push:
     branches: ["main"]
@@ -13,13 +14,12 @@ jobs:
   core-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
-      - name: Get changed files
-        id: changed-files
+      - name: Detect core changes
+        id: changed
         uses: tj-actions/changed-files@v44
         with:
           files: |
@@ -28,53 +28,42 @@ jobs:
             uv.lock
             .github/workflows/tests.yml
 
-      - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
 
-      - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true'
+      - name: Install deps
+        if: steps.changed.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
-        
+
       - name: Run core tests with coverage
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed.outputs.any_changed == 'true'
+        env:
+          COVERAGE_FILE: .coverage.core
         run: |
-          CI=true uv run pytest \
-            -vvxss \
-            --basetemp="${{ runner.temp }}/pytest" \
-            -o tmp_path_retention=none \
-            -o tmp_path_retention_count=0 \
+          CI=true uv run pytest -vvxss \
             --cov=openhands/core \
             --cov-report=term-missing \
             openhands/core/tests
 
-      - name: Build coverage XML (separate step, lower mem)
-        if: steps.changed-files.outputs.any_changed == 'true' && always()
-        run: uv run coverage xml -i -o coverage-core.xml
-
-      - name: Upload core coverage artifact
-        if: steps.changed-files.outputs.any_changed == 'true' && always()
+      - name: Upload core coverage
+        if: steps.changed.outputs.any_changed == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-core
-          path: coverage-core.xml
+          path: .coverage.core
 
   tools-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
-      - name: Get changed files
-        id: changed-files
+      - name: Detect tools changes
+        id: changed
         uses: tj-actions/changed-files@v44
         with:
           files: |
@@ -82,54 +71,43 @@ jobs:
             pyproject.toml
             uv.lock
             .github/workflows/tests.yml
-
-      - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
+      
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
 
-      - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true'
+      - name: Install deps
+        if: steps.changed.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
-        
+
       - name: Run tools tests with coverage
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed.outputs.any_changed == 'true'
+        env:
+          COVERAGE_FILE: .coverage.tools
         run: |
-          CI=true uv run pytest \
-            -vvxss \
-            --basetemp="${{ runner.temp }}/pytest" \
-            -o tmp_path_retention=none \
-            -o tmp_path_retention_count=0 \
+          CI=true uv run pytest -vvxss \
             --cov=openhands/tools \
             --cov-report=term-missing \
             openhands/tools/tests
 
-      - name: Build coverage XML (separate step, lower mem)
-        if: steps.changed-files.outputs.any_changed == 'true' && always()
-        run: uv run coverage xml -i -o coverage-tools.xml
-
-      - name: Upload tools coverage artifact
-        if: steps.changed-files.outputs.any_changed == 'true' && always()
+      - name: Upload tools coverage
+        if: steps.changed.outputs.any_changed == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-tools
-          path: coverage-tools.xml
+          path: .coverage.tools
 
   integration-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
-      - name: Get changed files
-        id: changed-files
+      - name: Detect integration changes
+        id: changed
         uses: tj-actions/changed-files@v44
         with:
           files: |
@@ -138,90 +116,72 @@ jobs:
             pyproject.toml
             uv.lock
             .github/workflows/tests.yml
-
-      - name: Set up Python
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
+      
       - name: Install uv
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed.outputs.any_changed == 'true'
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
 
-      - name: Install dependencies
-        if: steps.changed-files.outputs.any_changed == 'true'
+      - name: Install deps
+        if: steps.changed.outputs.any_changed == 'true'
         run: uv sync --frozen --group dev
-        
-      - name: Run integration tests
-        if: steps.changed-files.outputs.any_changed == 'true'
+
+      - name: Run integration tests with coverage
+        if: steps.changed.outputs.any_changed == 'true'
+        env:
+          COVERAGE_FILE: .coverage.integration
         run: |
-          set +e
-          CI=true uv run pytest \
-            -vvxss \
+          CI=true uv run pytest -vvxss \
             --basetemp="${{ runner.temp }}/pytest" \
             -o tmp_path_retention=none \
             -o tmp_path_retention_count=0 \
+            --cov=openhands \
+            --cov-report=term-missing \
             tests
-          exit_code=$?
-          set -e
-          if [ "$exit_code" -eq 5 ]; then
-            echo "No integration tests collected. Treating as success."
-            exit 0
-          else
-            exit "$exit_code"
-          fi
+
+      - name: Upload integration coverage
+        if: steps.changed.outputs.any_changed == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration
+          path: .coverage.integration
 
   coverage-report:
     runs-on: ubuntu-latest
-    needs: [core-tests, tools-tests]
+    needs: [core-tests, tools-tests, integration-tests]
     if: always() && github.event_name == 'pull_request'
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
 
-      - name: Install dependencies
+      - name: Install deps (for coverage CLI)
         run: uv sync --frozen --group dev
 
-      - name: Download core coverage
-        if: needs.core-tests.result == 'success'
+      - name: Download coverage artifacts
         uses: actions/download-artifact@v4
         with:
-          name: coverage-core
-          path: ./
+          path: ./cov
         continue-on-error: true
 
-      - name: Download tools coverage
-        if: needs.tools-tests.result == 'success'
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-tools
-          path: ./
-        continue-on-error: true
-
-      - name: Combine coverage reports
+      - name: Combine coverage data
         run: |
-          if [ -f coverage-core.xml ] && [ -f coverage-tools.xml ]; then
-            # For now, just use the core coverage as the main report
-            # since core and tools are separate packages
-            cp coverage-core.xml coverage.xml
-            echo "Using core coverage report (tools coverage available separately)"
-          elif [ -f coverage-core.xml ]; then
-            cp coverage-core.xml coverage.xml
-          elif [ -f coverage-tools.xml ]; then
-            cp coverage-tools.xml coverage.xml
-          else
-            echo "No coverage files found, skipping coverage report"
+          shopt -s nullglob
+          files=(cov/**/.coverage*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No coverage files found; skipping combined report."
             exit 0
           fi
+          # Bring files to cwd so coverage can find them easily
+          cp "${files[@]}" .
+          uv run coverage combine
+          uv run coverage xml -i -o coverage.xml
+          uv run coverage report -m || true
 
       - name: Pytest coverage PR comment
         if: always()
@@ -232,4 +192,3 @@ jobs:
           pytest-xml-coverage-path: coverage.xml
           title: Coverage Report
           create-new-comment: false
-
