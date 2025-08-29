@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, ParamSpec
 
 
 if TYPE_CHECKING:
@@ -7,10 +7,13 @@ if TYPE_CHECKING:
 from openhands.core.llm import Message
 from openhands.core.logger import get_logger
 
+from .persistence import ConversationPersistence
 from .state import ConversationState
 from .types import ConversationCallbackType
 from .visualizer import ConversationVisualizer
 
+
+P = ParamSpec("P")
 
 logger = get_logger(__name__)
 
@@ -35,15 +38,16 @@ class Conversation:
         self._on_event = compose_callbacks(
             [self._visualizer.on_event] + (callbacks if callbacks else [])
         )
+        self._persistence = ConversationPersistence()
         self.max_iteration_per_run = max_iteration_per_run
 
         self.agent = agent
-
         self.state = ConversationState()
 
     def send_message(self, message: Message) -> None:
         """Sending messages to the agent."""
         with self.state:
+            self.state.agent_finished = False
             if not self.state.agent_initialized:
                 # mutate in place; agent must follow this contract
                 self.agent.init_state(
@@ -73,3 +77,34 @@ class Conversation:
             iteration += 1
             if iteration >= self.max_iteration_per_run:
                 break
+
+    
+    def save(self, dir_path: str) -> None:
+        """Save current conversation state + messages to disk."""
+        self._persistence.save(self, dir_path)
+
+    @classmethod
+    def load(
+        cls,
+        dir_path: str,
+        agent: "AgentBase",
+        persistence: ConversationPersistence | None = None,
+        **kwargs
+    ) -> "Conversation":
+        """Load conversation state + messages from disk.
+
+        Args:
+            agent: The agent associated with the conversation.
+            dir_path: The directory path to load the conversation from.
+            persistence: The persistence layer to use (optional).
+            kwargs: Additional keyword arguments to pass to the conversation constructor.
+        """
+        persistence = persistence or ConversationPersistence()
+        return persistence.load(
+            cls,
+            agent,
+            dir_path,
+            ConversationState,
+            Message,
+            **(kwargs or {})
+        )
